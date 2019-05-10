@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Camera buttons -->
+    <attr name="camera_flash_on" format="reference"/>
+    <attr name="camera_flash_off" format="reference"/>
+    <attr name="camera_corners_on" format="reference"/>
+    <attr name="camera_corners_off" format="reference"/>
+    <attr name="camera_mode_batch" format="reference"/>
+    <attr name="camera_mode_single" format="reference"/>
+    <attr name="camera_shake_overlay" format="reference"/>
+</resources>

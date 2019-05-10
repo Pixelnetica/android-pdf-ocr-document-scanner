@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_grey_300">#E0E0E0</color>
+    <color name="primary_grey_400">#BDBDBD</color>
+    <color name="primary_grey_700">#616161</color>
+    <color name="accent_indigo_500">#3F51B5</color>
+
+    <color name="camera_toolbar_background">#7FFFFFFF</color>
+
+    <color name="camera_shooter_text_color">#FFFFFF</color>
+    <color name="camera_message_text_color">#FFFF00</color>
+    <color name="camera_message_text_background">#7F000000</color>
+    <color name="camera_overlay_frame_color">#C000FF00</color>
+    <color name="camera_overlay_alert_color">#C0FF0000</color>
+
+	<color name="crop_thumb">#7f00ddff</color>
+
+	<!-- A light Holo shade of red -->
+	<color name="holo_red_light">#ffff4444</color>
+	<!-- A dark Holo shade of blue -->
+	<color name="holo_blue_dark">#ff0099cc</color>
+	<!-- A dark Holo shade of green -->
+	<color name="holo_green_dark">#ff99cc00</color>
+	<!-- A really bright Holo shade of blue -->
+	<color name="holo_blue_bright">#ff00ddff</color>
+	<!-- A really bright Holo shade of green -->
+	<color name="holo_green_bright">#ffddff00</color>
+
+
+</resources>

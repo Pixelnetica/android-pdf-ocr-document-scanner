@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<attr name="color_crop_edge" format="color"/>
+	<attr name="color_crop_edge_active" format="color"/>
+	<attr name="color_crop_edge_invalid" format="color"/>
+	<attr name="color_crop_corner" format="color"/>
+	<attr name="color_crop_corner_active" format="color"/>
+	<attr name="color_crop_corner_invalid" format="color"/>
+	<attr name="color_crop_thumb" format="color"/>
+	<attr name="color_crop_thumb_active" format="color"/>
+	<attr name="color_crop_thumb_invalid" format="color"/>
+	<attr name="color_crop_thumb_border" format="color"/>
+	<attr name="color_crop_thumb_border_active" format="color"/>
+	<attr name="color_crop_thumb_border_invalid" format="color"/>
+</resources>

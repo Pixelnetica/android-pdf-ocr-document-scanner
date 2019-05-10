@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+	<style name="AppBaseTheme.NoActionBar">
+		<item name="windowActionBar">false</item>
+		<item name="windowNoTitle">true</item>
+		<!--
+		Need by CoordinatorLayout only
+		<item name="android:windowDrawsSystemBarBackgrounds">true</item>
+		<item name="android:statusBarColor">@android:color/transparent</item>
+		-->
+
+		<!-- Colorize bottom bar -->
+		<item name="android:navigationBarColor">@color/primary_dark</item>
+	</style>
+</resources>

@@ -1,0 +1,108 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
+    -->
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+
+    <!-- NOTE: different for v21 -->
+    <style name="AppBaseTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme" parent="AppBaseTheme.NoActionBar">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+	    <item name="actionBarStyle">@style/AppTheme.ActionBar</item>
+	    <!--
+	    <item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>
+	    -->
+        <!-- Need by new ToolBar -->
+        <item name="windowActionModeOverlay">true</item>
+        <!-- Using custom palette -->
+	    <item name="colorPrimary">@color/primary</item>
+	    <item name="colorPrimaryDark">@color/primary_dark</item>
+	    <item name="colorAccent">@color/accent</item>
+
+        <!-- Colors -->
+        <item name="color_crop_edge">@color/holo_blue_dark</item>
+        <item name="color_crop_edge_active">@color/holo_blue_bright</item>
+        <item name="color_crop_edge_invalid">@color/holo_red_light</item>
+        <item name="color_crop_corner">@color/holo_blue_dark</item>
+        <item name="color_crop_corner_active">@color/holo_green_bright</item>
+        <item name="color_crop_corner_invalid">@color/holo_red_light</item>
+        <item name="color_crop_thumb">@color/holo_blue_dark</item>
+        <item name="color_crop_thumb_active">@color/holo_green_bright</item>
+        <item name="color_crop_thumb_invalid">@color/holo_red_light</item>
+        <item name="color_crop_thumb_border">@color/holo_blue_dark</item>
+        <item name="color_crop_thumb_border_active">@color/holo_blue_bright</item>
+        <item name="color_crop_thumb_border_invalid">@color/holo_red_light</item>
+
+    </style>
+
+    <!-- Remove app's icon and title from action bar -->
+	<style name="AppTheme.ActionBar" parent="ThemeOverlay.AppCompat.ActionBar">
+ 		<item name="android:displayOptions">useLogo</item>
+ 		<item name="displayOptions">useLogo</item>
+		<!-- Using "dark" color instead accent -->
+		<item name="colorAccent">?attr/android:colorControlNormal</item>
+
+		<!-- Pass button text color. Need for API 19 -->
+		<item name="buttonBarButtonStyle">@style/AppTheme.ActionBar.Button</item>
+
+		<!-- Workaround Galaxy Nexus (Android 4.4.4) BUG. -->
+		<item name="android:textColorLink">@color/accent</item>
+
+ 	</style>
+
+    <!-- Light popup menu -->
+    <style name="AppTheme.ActionBar.Popup" parent="Theme.AppCompat.Light">
+
+    </style>
+
+	<style name="AppTheme.ActionBar.Button" parent="Widget.AppCompat.Button.Borderless">
+		<item name="android:textAppearance">?attr/android:textAppearanceButton</item>
+	</style>
+
+    <style name="CameraTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Full screen Camera -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+
+        <item name="camera_flash_off">@drawable/ic_action_flash_off_dark</item>
+        <item name="camera_flash_on">@drawable/ic_action_flash_on_dark</item>
+        <item name="camera_corners_off">@drawable/ic_camera_detector_off</item>
+        <item name="camera_corners_on">@drawable/ic_camera_detector_on</item>
+        <item name="camera_mode_single">@drawable/ic_camera_singlemode</item>
+        <item name="camera_mode_batch">@drawable/ic_camera_batchmode</item>
+        <item name="camera_shake_overlay">@drawable/ic_camera_shake_on_wave</item>
+    </style>
+
+    <style name="SettingsTheme" parent="Theme.AppCompat.Light">
+        <item name="actionBarStyle">@style/SettingsTheme.ActionBar</item>
+    </style>
+
+    <style name="SettingsTheme.ActionBar">
+        <item name="displayOptions">showHome|showTitle|homeAsUp</item>
+    </style>
+
+    <style name="CameraShotCounter" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textColor">@color/camera_shooter_text_color</item>
+        <item name="android:background">@drawable/shot_counter_background</item>
+    </style>
+
+    <style name="CameraConsole" parent="CameraShotCounter">
+        <item name="android:textColor">@color/camera_message_text_color</item>
+        <item name="android:background">@drawable/camera_console_item_background</item>
+    </style>
+
+
+</resources>

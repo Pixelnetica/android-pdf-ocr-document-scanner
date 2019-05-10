@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="settings_sdk_chooser" type="id"/>
+    <item name="settings_custom_detection_params" type="id"/>
+    <item name="settings_external_license_key" type="id"/>
+
+</resources>

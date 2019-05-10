@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ConsoleView">
+        <!-- See ConsoleView -->
+        <attr name="dockSide" format="enum">
+            <enum name="bottom" value="0"/>
+            <enum name="left" value="1"/>
+            <enum name="right" value="2"/>
+            <enum name="top" value="3"/>
+        </attr>
+    </declare-styleable>
+</resources>

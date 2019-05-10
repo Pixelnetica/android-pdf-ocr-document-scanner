@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_uncertain_detection">"Uncertain detection"</string>
+    <string name="camera_small_area">"Move Camera closer to document"</string>
+    <string name="camera_distorted">"Hold camera parallel to document"</string>
+</resources>

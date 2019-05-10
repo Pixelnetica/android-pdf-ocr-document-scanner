@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingBottom="@dimen/activity_vertical_margin"
+                    android:paddingLeft="@dimen/activity_horizontal_margin"
+                    android:paddingRight="@dimen/activity_horizontal_margin"
+                    android:paddingTop="@dimen/activity_vertical_margin"
+    >
+    <!-- Application parameters -->
+    <FrameLayout
+        android:id="@+id/settings_app_params_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/dialog_vertical_margin"/>
+
+    <!-- Document cutout parametes -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/settings_cutout_params_holder"
+        android:layout_marginBottom="@dimen/dialog_vertical_margin"/>
+
+    <!-- SDK chooser and parameters -->
+    <FrameLayout
+        android:id="@+id/settings_sdk_params_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

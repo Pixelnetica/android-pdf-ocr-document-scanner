@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_manual_crop"
+        app:showAsAction="never"
+        android:title="@string/action_force_manual_crop"
+        android:titleCondensed="@string/action_force_manual_crop"/>
+    <item
+        android:id="@+id/action_strong_shadows"
+        app:showAsAction="never"
+        android:checkable="true"
+        android:title="@string/action_strong_shadows"
+        android:titleCondensed="@string/action_strong_shadows"/>
+    <group
+        android:id="@+id/action_profile_group"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_profile_nobinarization"
+            android:title="@string/action_profile_nobinarization"
+            android:titleCondensed="@string/action_profile_nobinarization"
+            app:showAsAction="never"
+            />
+        <item
+            android:id="@+id/action_profile_bwbinarization"
+            android:title="@string/action_profile_bwbinarization"
+            android:titleCondensed="@string/action_profile_bwbinarization"
+	        app:showAsAction="never"
+            />
+        <item
+            android:id="@+id/action_profile_graybinarization"
+            android:title="@string/action_profile_graybinarization"
+            android:titleCondensed="@string/action_profile_graybinarization"
+	        app:showAsAction="never"
+            />
+        <item
+            android:id="@+id/action_profile_colorbinarization"
+            android:title="@string/action_profile_colorbinarization"
+            android:titleCondensed="@string/action_profile_colorbinarization"
+	        app:showAsAction="never"
+	        />
+    </group>
+
+    <item
+        android:id="@+id/action_settings"
+        app:showAsAction="never"
+        android:title="@string/action_settings"
+        android:titleCondensed="@string/action_settings"/>
+
+    <item
+        android:id="@+id/action_about"
+        app:showAsAction="never"
+        android:title="@string/action_about"
+        android:titleCondensed="@string/action_about"/>
+</menu>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CameraOverlay">
+        <attr name="frameWidth" format="dimension"/>
+        <attr name="frameColor" format="color"/>
+        <attr name="boundsColor" format="color"/>
+        <attr name="alertColor" format="color"/>
+    </declare-styleable>
+</resources>

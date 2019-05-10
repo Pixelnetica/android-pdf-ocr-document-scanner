@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- set 0 to disable animation -->
+    <integer name="camera_buttons_rotate_duration_ms">500</integer>
+    <bool name="camera_shot_on_touch">true</bool>
+    <bool name="camera_flash_mode">true</bool>
+    <bool name="camera_stab_mode">true</bool>
+    <bool name="camera_show_document">true</bool>
+    <integer name="camera_shot_timeout_ms">9000</integer>
+
+    <integer name="auto_shot_radius_100">7</integer>
+    <integer name="auto_shot_delay_ms">1000</integer>
+    <integer name="auto_shot_count">3</integer>
+</resources>

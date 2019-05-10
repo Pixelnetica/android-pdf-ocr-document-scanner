@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+          android:shape="oval">
+    <!-- NOTE: Cannot use attributes in drawables :( -->
+    <size
+        android:width="@dimen/shutter_mini_size"
+        android:height="@dimen/shutter_mini_size"/>
+    <solid
+        android:color="@color/primary_grey_700"/>
+    <stroke
+        android:color="@color/primary_grey_700"
+        android:width="@dimen/shutter_border_width"/>
+</shape>
