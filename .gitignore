@@ -80,5 +80,5 @@ fastlane/test_output
 fastlane/readme.md
 
 # License key file
-**/license.key
-license.key
+# **/license.key
+# license.key
