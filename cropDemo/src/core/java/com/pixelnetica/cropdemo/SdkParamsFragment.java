@@ -1,5 +1,6 @@
 package com.pixelnetica.cropdemo;
 
+import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
@@ -10,7 +11,7 @@ public class SdkParamsFragment extends Fragment implements ISettingsFragment {
 	// Stub
 
 	@Override
-	public boolean save(@NonNull MainIdentity identity) {
+	public boolean save(@NonNull SharedPreferences.Editor editor) {
 		return true;
 	}
 }

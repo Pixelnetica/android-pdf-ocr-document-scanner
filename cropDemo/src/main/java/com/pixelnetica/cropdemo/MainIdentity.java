@@ -1,37 +1,35 @@
 package com.pixelnetica.cropdemo;
 
 import android.app.Application;
+import android.arch.lifecycle.AndroidViewModel;
+import android.arch.lifecycle.MutableLiveData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
-import com.pixelnetica.cropdemo.util.Identity;
+import com.pixelnetica.cropdemo.util.Action;
 import com.pixelnetica.imagesdk.MetaImage;
 
 import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.pixelnetica.cropdemo.ProcessImageTask.BWBinarization;
 
 /**
  * Identity for MainActivity
+ * Contains all "back-end" stuff for MainActivity
  * Created by Denis on 25.03.2018.
  */
 
-class MainIdentity extends Identity<MainActivity> {
+public class MainIdentity extends AndroidViewModel {
 
 	// Some popular actions
 
@@ -87,7 +85,7 @@ class MainIdentity extends Identity<MainActivity> {
 	/**
 	 * Loaded source
 	 */
-	/*private*/ Uri mSourceUri;
+	private Uri mSourceUri;
 
 	/**
 	 * Source image orientation: will be initialized on load
@@ -114,7 +112,11 @@ class MainIdentity extends Identity<MainActivity> {
 
 	// Always use manual crop
 	private boolean mForceManualCrop;
-	private static final String PREFS_FORCE_MANUAL_CROP = "FORCE_MANUAL_CROP";
+	static final String PREFS_FORCE_MANUAL_CROP = "FORCE_MANUAL_CROP";
+
+	// Perform crop when open
+	private boolean mAutoCropOnOpen = true;
+	static final String PREFS_AUTO_CROP_ON_OPEN = "AUTO_CROP_ON_OPEN";
 
 	// Special mode for some processing
 	private boolean mStrongShadows;
@@ -134,9 +136,29 @@ class MainIdentity extends Identity<MainActivity> {
 	private int mPdfConfig;
 	private static final String PREFS_PDF_CONFIG = "pdf-config";
 
-	MainIdentity(@NonNull Application application) {
+	public MainIdentity(@NonNull Application application) {
+		super(application);
 		SdkFactory = new AppSdkFactory(application);
 		mCR = application.getContentResolver();
+	}
+
+	/**
+	 * List of commands to perform in controlled activity
+	 */
+	MutableLiveData<List<Action<MainActivity>>> executeList = new MutableLiveData<>();
+
+	private ArrayList<Action<MainActivity>> actionList = new ArrayList<>();
+	private void execute(Action<MainActivity> action, boolean collapse) {
+		if (collapse) {
+			actionList.remove(action);
+		}
+		actionList.add(action);
+
+		executeList.setValue(actionList);
+	}
+
+	private void execute(Action<MainActivity> action) {
+		execute(action, false);
 	}
 
 	void loadSettings() {
@@ -146,6 +168,7 @@ class MainIdentity extends Identity<MainActivity> {
 
 		// Main params
 		mForceManualCrop = prefs.getBoolean(PREFS_FORCE_MANUAL_CROP, mForceManualCrop);
+		mAutoCropOnOpen = prefs.getBoolean(PREFS_AUTO_CROP_ON_OPEN, mAutoCropOnOpen);
 		mStrongShadows = prefs.getBoolean(PREFS_STRONG_SHADOWS, mStrongShadows);
 		mProcessingProfile = prefs.getInt(PREFS_PROCESSING_PROFILE, mProcessingProfile);
 
@@ -175,6 +198,22 @@ class MainIdentity extends Identity<MainActivity> {
 			SharedPreferences preferences = SdkFactory.getPreferences();
 			SharedPreferences.Editor editor = preferences.edit();
 			editor.putBoolean(PREFS_FORCE_MANUAL_CROP, mForceManualCrop);
+			editor.apply();
+		}
+	}
+
+	boolean getAutoCropOnOpen() {
+		return mAutoCropOnOpen;
+	}
+
+	void setAutoCropOnOpen(boolean value) {
+		if (value != mAutoCropOnOpen) {
+			mAutoCropOnOpen = value;
+
+			// Store settings now!
+			SharedPreferences preferences = SdkFactory.getPreferences();
+			SharedPreferences.Editor editor = preferences.edit();
+			editor.putBoolean(PREFS_AUTO_CROP_ON_OPEN, mAutoCropOnOpen);
 			editor.apply();
 		}
 	}
@@ -279,35 +318,38 @@ class MainIdentity extends Identity<MainActivity> {
 	}
 
 	void openImage(Uri imageUri) {
-		openImage(imageUri, null);
+		openImage(imageUri, () -> {
+			// Automatically process image
+			if (mAutoCropOnOpen) {
+				processImage(mProcessingProfile);
+			}
+		});
 	}
 
 	private void openImage(Uri imageUri, final Runnable callback) {
 		setWaitStateForceUI(true);
 
-		LoadImageTask task = new LoadImageTask(SdkFactory, mCR, new LoadImageTask.Listener() {
-			@Override
-			public void onImageLoaded(LoadImageTask task, LoadImageTask.LoadImageResult result) {
-				if (result.hasError()) {
-					showError(result.error, result.sourceUri);
-				} else {
-					mImageMode = Source;
-					mSourceUri = result.sourceUri;
-					mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
-					mProcessedImage = result.loadedImage;
+		LoadImageTask task = new LoadImageTask(SdkFactory, mCR, (LoadImageTask imageTask, LoadImageTask.LoadImageResult result) -> {
+			if (result.hasError()) {
+				showError(result.error, result.sourceUri);
+			} else {
+				mImageMode = Source;
+				mSourceUri = result.sourceUri;
+				mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
+				mProcessedImage = result.loadedImage;
 
-					// openImage can be use to reload
-					// Do not update crop data in this case
-					if (mSourceCropData == null) {
-						mSourceCropData = new CropData(mProcessedImage);
-					}
+				// openImage can be use to reload
+				// Do not update crop data in this case
+				if (mSourceCropData == null) {
+					mSourceCropData = new CropData(mProcessedImage);
+				}
 
-					if (callback != null) {
-						callback.run();
-					}
+				// Force UI to show loaded image even wait state
+				setWaitStateForceUI(false);
 
-					// Force UI to show loaded image even wait state
-					setWaitStateForceUI(false);
+				// Perform additional processing
+				if (callback != null) {
+					callback.run();
 				}
 			}
 		});
@@ -316,27 +358,24 @@ class MainIdentity extends Identity<MainActivity> {
 
 	void detectDocument() {
 		setWaitStateForceUI(true);
-		DetectDocCornersTask task = new DetectDocCornersTask(SdkFactory, new DetectDocCornersTask.Listener() {
-			@Override
-			public void onDocCornersDetected(DetectDocCornersTask task, DetectDocCornersTask.DocCornersResult result) {
-				if (result.hasError()) {
-					showError(result.error, null);
-				} else if (result.isSmartCrop) {
-					// Update corners
-					mSourceCropData.setCorners(result.corners);
-					// Start processing
-					if (mForceManualCrop) {
-						mImageMode = Source;
-					} else {
-						processSource(mProcessingProfile);
-					}
-				} else {
-					// Switch back to source mode to show corners
-					mSourceCropData.setCorners(result.corners);
+		DetectDocCornersTask task = new DetectDocCornersTask(SdkFactory, (DetectDocCornersTask docCornersTask, @NonNull DetectDocCornersTask.DocCornersResult result) -> {
+			if (result.hasError()) {
+				showError(result.error, null);
+			} else if (result.isSmartCrop) {
+				// Update corners
+				mSourceCropData.setCorners(result.corners);
+				// Start processing
+				if (mForceManualCrop) {
 					mImageMode = Source;
+				} else {
+					processSource(mProcessingProfile);
 				}
-				setWaitStateForceUI(false);
+			} else {
+				// Switch back to source mode to show corners
+				mSourceCropData.setCorners(result.corners);
+				mImageMode = Source;
 			}
+			setWaitStateForceUI(false);
 		});
 		mProcessedImage.setExifOrientation(mSourceCropData.getOrientation());
 		task.execute(mProcessedImage);
@@ -351,12 +390,7 @@ class MainIdentity extends Identity<MainActivity> {
 			}
 		} else if (mImageMode == Target) {
 			// Reload source and perform full processing
-			openImage(mSourceUri, new Runnable() {
-				@Override
-				public void run() {
-					processSource(processing);
-				}
-			});
+			openImage(mSourceUri, () -> processSource(processing));
 		}
 	}
 
@@ -369,19 +403,16 @@ class MainIdentity extends Identity<MainActivity> {
 		if (mStrongShadows) {
 			processing |= ProcessImageTask.StrongShadows;
 		}
-		ProcessImageTask task = new ProcessImageTask(SdkFactory, mSourceCropData, processing, new ProcessImageTask.Listener() {
-			@Override
-			public void onProcessImageComplete(@NonNull ProcessImageTask task, @NonNull ProcessImageTask.ProcessImageResult result) {
-				if (result.hasError()) {
-					showError(result.error, null);
-				} else {
-					mImageMode = Target;
-					mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
-					mProcessedImage = result.targetImage;
-					mTargetCropData = new CropData(mProcessedImage);
-				}
-				setWaitStateForceUI(false);
+		ProcessImageTask task = new ProcessImageTask(SdkFactory, mSourceCropData, processing, (ProcessImageTask processImageTask, @NonNull ProcessImageTask.ProcessImageResult result) -> {
+			if (result.hasError()) {
+				showError(result.error, null);
+			} else {
+				mImageMode = Target;
+				mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
+				mProcessedImage = result.targetImage;
+				mTargetCropData = new CropData(mProcessedImage);
 			}
+			setWaitStateForceUI(false);
 		});
 
 		mProcessedImage.setExifOrientation(mSourceCropData.getOrientation());
@@ -390,7 +421,7 @@ class MainIdentity extends Identity<MainActivity> {
 
 	void manualCrop() {
 		if (mImageMode == Target) {
-			openImage(mSourceUri);
+			openImage(mSourceUri, null);
 		}
 	}
 

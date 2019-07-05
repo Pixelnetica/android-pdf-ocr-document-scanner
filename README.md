@@ -12,6 +12,9 @@ The documentation for DSSDK Android version can be found by the link below:
 
 📖 [Pixelnetica Document Scanning SDK for Android documentation](https://pixelnetica.github.io/Document-Scanning-SDK-Documentation/Android/ "Document Scanning SDK for Android Documentation")
 
+### Auto Crop
+To enable or disable AutoCrop just switch `Auto-Crop on open` in `Settings` menu.
+
 ## License
 
 By default application source code bundled with _Demo license_ which puts watermarks on resulted images. 
@@ -25,7 +28,6 @@ It is strictly prohibited to distribute, market, publish to application stores l
 
 For more information about DSSDK main Features and Benefits please visit [Pixelnetica website](https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-api-features.html "Document Scanning SDK: Main Features and Benefits"). 
 
-
-## Have Questions, need Free Trial or Quotation?
+## Have Questions, need Free Demo license or Quotation?
 
 Feel free to contact us to request free trial license, price quotation or in case of any inquires at [Pixelnetica DSSDK Support](https://www.pixelnetica.com/products/document-scanning-sdk/sdk-support.html "Contact Pixelnetica support for Free trial, Quotation or incase of any questions").

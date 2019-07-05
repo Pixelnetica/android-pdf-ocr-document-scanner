@@ -2,36 +2,25 @@ package com.pixelnetica.cropdemo;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.BundleCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 
-import com.pixelnetica.cropdemo.util.Identity;
-
 /**
  * Created by Denis on 30.08.2016.
  */
 public class SettingsActivity extends AppCompatActivity {
-	public static final String ARG_PREVIEW_SIZES = "preview_sizes";
-	public static final String ARG_DEFAULT_PREVIEW_SIZE = "default_preview_size";
-
-	public static final String ARG_MAIN_IDENTITY = "main_offstage";
 
 	// Custom Fragments
 	private AppParamsFragment mAppParams;
 	private SdkParamsFragment mSdkParams;
 	private CutoutParamsFragment mCutoutParams;
-
-	static Intent newIntent(@NonNull Context context, @NonNull MainIdentity identity) {
-		final Intent in = new Intent(context, SettingsActivity.class);
-		in.putExtra(ARG_MAIN_IDENTITY, identity);    // as Parcelable
-		return in;
-	}
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,24 +78,27 @@ public class SettingsActivity extends AppCompatActivity {
 			return true;
 		} else if (id == R.id.action_apply) {
 
-			final MainIdentity identity = (MainIdentity) Identity.readBundle(getIntent().getExtras(), ARG_MAIN_IDENTITY);
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			SharedPreferences.Editor editor = preferences.edit();
 
 			// Save camera data
-			boolean succeeded = identity != null;
+			boolean succeeded = true;
 
 			// Save general params
 			if (succeeded && mAppParams != null) {
-				succeeded = mAppParams.save(identity);
+				succeeded = mAppParams.save(editor);
 			}
 
 			if (succeeded && mCutoutParams != null) {
-				succeeded = mCutoutParams.save(identity);
+				succeeded = mCutoutParams.save(editor);
 			}
 
 			// Save SDK params
 			if (succeeded && mSdkParams != null) {
-				succeeded = mSdkParams.save(identity);
+				succeeded = mSdkParams.save(editor);
 			}
+
+			editor.apply();
 
 			if (succeeded) {
 				setResult(RESULT_OK);

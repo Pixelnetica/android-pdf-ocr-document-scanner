@@ -2,12 +2,13 @@ package com.pixelnetica.cropdemo;
 
 
 import com.pixelnetica.cropdemo.camera.CameraActivity;
-import com.pixelnetica.cropdemo.util.Identity;
+import com.pixelnetica.cropdemo.util.Action;
 import com.pixelnetica.cropdemo.util.RuntimePermissions;
-import com.pixelnetica.cropdemo.widget.TransformedDrawable;
 import com.pixelnetica.imagesdk.MetaImage;
 
 import android.Manifest;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,7 +18,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,7 +39,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -53,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 	private static final int PICK_IMAGE = 100;
 	private static final int TAKE_PHOTO = 101;
+	private static final int SHOW_SETTINGS = 102;
 
 	// Main Identity
 	MainIdentity mIdentity;
@@ -77,19 +77,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Setup Identity
-	    if (savedInstanceState == null) {
-	    	// Create a new Identity
-	    	mIdentity = new MainIdentity(getApplication());
-	    	mIdentity.loadSettings();
-	    } else {
-	    	mIdentity = (MainIdentity) Identity.readBundle(savedInstanceState, BUNDLE_IDENTITY);
-	    }
+	    // Create a new Identity
+	    mIdentity = ViewModelProviders.of(this).get(MainIdentity.class);
+	    mIdentity.executeList.observe(this, actions -> {
+	    	if (actions != null) {
+			    for (Action<MainActivity> action : actions) {
+				    action.run(this);
+			    }
+			    actions.clear();
+		    }
+	    });
 
-	    if (mIdentity == null) {
-	    	// Cannot load identity
-		    Log.e(AppLog.TAG, "MainActivity cannot load Identity");
-	    	finish();
+	    if (savedInstanceState == null) {
+		    // Setup Identity on startup
+	    	mIdentity.loadSettings();
 	    }
 
         // Add buttons to action bar
@@ -116,33 +117,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mImageView.setSdkFactory(mIdentity.SdkFactory);
 		mProgressWait = findViewById(R.id.progress_wait);
     }
-
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-
-		if (mIdentity != null) {
-			mIdentity.writeBundle(outState, BUNDLE_IDENTITY);
-		}
-
-	}
-
-	@Override
-    protected void onResume() {
-    	super.onResume();
-
-    	mIdentity.attach(this);
-
-    	// Set buttons state
-	    updateUI();
-    }
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-
-		mIdentity.attach(null);
-	}
 
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -197,8 +171,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 	        mIdentity.manualCrop();
 	        return true;
         } else if (id == R.id.action_settings) {
-	        final Intent intent = SettingsActivity.newIntent(this, mIdentity);
-	        startActivity(intent);
+	        startActivityForResult(new Intent(this, SettingsActivity.class), SHOW_SETTINGS);
 	        return true;
         } else if (id == R.id.action_strong_shadows) {
         	// Invert strong shadows
@@ -579,6 +552,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 				    mIdentity.openImage(selectedImage);
 			    }
 			    break;
+		    case SHOW_SETTINGS:
+		    	mIdentity.loadSettings();
+		    	updateUI();
+		    	break;
 	    }
     }
 

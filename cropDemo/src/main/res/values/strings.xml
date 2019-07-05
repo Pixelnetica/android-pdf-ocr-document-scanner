@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">DI SDK Demo</string>
+    <string name="app_name">DSSDK Demo</string>
     <string name="hello_world">Hello world!</string>
     <string name="btn_open_image">Open</string>
     <string name="btn_take_photo">Shot</string>
@@ -29,10 +29,10 @@
     <string name="msg_cannot_save_file">Cannot save processed image</string>
     <string name="action_settings">Settings</string>
     <string name="action_profile_group">Processing profile</string>
-    <string name="action_profile_nobinarization">No Binarization</string>
-    <string name="action_profile_bwbinarization">B/W Binarization</string>
-    <string name="action_profile_graybinarization">Gray Binarization</string>
-    <string name="action_profile_colorbinarization">Color Binarization</string>
+    <string name="action_profile_nobinarization">Original</string>
+    <string name="action_profile_bwbinarization">Black &amp; White</string>
+    <string name="action_profile_graybinarization">Gray</string>
+    <string name="action_profile_colorbinarization">Color</string>
     <string name="action_rotate_left">Rotate left</string>
     <string name="action_rotate_right">Rotate right</string>
     <string name="action_revert_selection">Revert selection</string>
@@ -48,7 +48,8 @@
     <string name="settings_camera_title">Camera parameters</string>
     <string name="settings_camera_preview_label">Camera preview size</string>
     <string name="settings_camera_serial_shot">Serial shot</string>
-    <string name="settings_app_force_manual_crop">Force manual crop</string>
+    <string name="settings_app_force_manual_crop">Force manual Crop</string>
+    <string name="settings_app_auto_crop_on_open">Auto-Crop on open</string>
     <array name="setting_save_formats">
         <!-- Must be in same order as CropDemoApp.SAVE_XXX -->
         <item>Save format JPEG</item>
