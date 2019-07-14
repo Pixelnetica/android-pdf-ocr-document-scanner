@@ -45,7 +45,7 @@ android {
         targetSdkVersion 28
 
         versionCode 37
-        versionName "2.3.4." + versionCode.toString()
+        versionName "2.3.5." + versionCode.toString()
 
         ndk {
             abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86']
@@ -97,7 +97,7 @@ repositories{
 }
 
 dependencies {
-    implementation('com.pixelnetica.sdk:scanning-release:2.3.4') { changing = true }
+    implementation('com.pixelnetica.sdk:scanning-release:2.3.5') { changing = true }
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:preference-v14:28.0.0'
     implementation 'com.android.support:design:28.0.0'
