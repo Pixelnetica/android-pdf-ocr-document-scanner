@@ -5,14 +5,14 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.util.SparseArrayCompat;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.collection.SparseArrayCompat;
 
 import com.pixelnetica.cropdemo.R;
 
@@ -55,7 +55,7 @@ public class RuntimePermissions {
 	private final SparseArrayCompat<PermissionTask> mPermissionTask = new SparseArrayCompat<>();
 
 	public int runWithPermission(@NonNull final AppCompatActivity activity, @NonNull final String permission,
-	                              @Nullable String message, @NonNull Callback action) {
+	                             @Nullable String message, @NonNull Callback action) {
 
 		if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
 			// Prepare callback

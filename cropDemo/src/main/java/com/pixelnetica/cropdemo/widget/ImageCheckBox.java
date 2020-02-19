@@ -1,9 +1,10 @@
 package com.pixelnetica.cropdemo.widget;
 
 import android.content.Context;
-import android.support.v7.widget.AppCompatImageButton;
 import android.util.AttributeSet;
 import android.widget.Checkable;
+
+import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.pixelnetica.cropdemo.widget.CheckableHelper;
 

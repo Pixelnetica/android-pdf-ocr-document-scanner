@@ -8,11 +8,10 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 import android.util.Log;
 
 import com.pixelnetica.cropdemo.AppLog;
-import com.pixelnetica.cropdemo.BuildConfig;
 import com.pixelnetica.cropdemo.SdkFactory;
 import com.pixelnetica.cropdemo.AppSdkFactory;
 import com.pixelnetica.cropdemo.util.SequentialThread;

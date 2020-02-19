@@ -3,8 +3,8 @@ package com.pixelnetica.cropdemo;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.pixelnetica.imagesdk.ImageFileWriter;

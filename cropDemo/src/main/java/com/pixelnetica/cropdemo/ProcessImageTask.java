@@ -1,21 +1,15 @@
 package com.pixelnetica.cropdemo;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.Point;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.pixelnetica.cropdemo.util.Utils;
 import com.pixelnetica.imagesdk.Corners;
 import com.pixelnetica.imagesdk.MetaImage;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

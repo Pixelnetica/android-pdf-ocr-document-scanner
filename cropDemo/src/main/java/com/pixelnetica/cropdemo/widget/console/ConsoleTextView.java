@@ -1,13 +1,12 @@
 package com.pixelnetica.cropdemo.widget.console;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.os.Build;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.widget.TextView;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 import com.pixelnetica.cropdemo.R;
 
@@ -15,7 +14,7 @@ import com.pixelnetica.cropdemo.R;
  * NOTE: Vertical (look at "horizontal" gravity doesn't work
  * Created by Denis on 10.06.2016.
  */
-public class ConsoleTextView extends android.support.v7.widget.AppCompatTextView {
+public class ConsoleTextView extends AppCompatTextView {
 
 	private int mDockSide = ConsoleView.DOCK_SIDE_INVALID;
 

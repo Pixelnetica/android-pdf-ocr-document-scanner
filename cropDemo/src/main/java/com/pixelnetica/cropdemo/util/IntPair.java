@@ -1,6 +1,6 @@
 package com.pixelnetica.cropdemo.util;
 
-import android.support.v4.util.Pair;
+import androidx.core.util.Pair;
 
 /**
  * Simple pair for two integer

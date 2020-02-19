@@ -1,11 +1,10 @@
 package com.pixelnetica.cropdemo;
 
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.pixelnetica.imagesdk.Corners;
-import com.pixelnetica.imagesdk.ImageSdkLibrary;
 import com.pixelnetica.imagesdk.MetaImage;
 
 

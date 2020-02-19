@@ -3,9 +3,7 @@ package com.pixelnetica.cropdemo.util;
 import android.os.Binder;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-
-import java.io.UncheckedIOException;
+import androidx.annotation.NonNull;
 
 public class ParcelableHolder implements Parcelable {
 	final Object mContent;

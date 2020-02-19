@@ -33,19 +33,19 @@ android {
         }
     }
 
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
     defaultConfig {
         applicationId "com.pixelnetica.cropdemo"
         // NOTE: Don't change value here. Select build flavor
         buildConfigField "boolean", "DEVELOP", "false"
         buildConfigField "String", "GIT_HASH", "\"${gitHash}\""
 
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 28
 
-        versionCode 37
-        versionName "2.3.5." + versionCode.toString()
+        versionCode 38
+        versionName "2.3.6." + versionCode.toString()
 
         ndk {
             abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86']
@@ -97,13 +97,15 @@ repositories{
 }
 
 dependencies {
-    implementation('com.pixelnetica.sdk:scanning-release:2.3.5') { changing = true }
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:preference-v14:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support:gridlayout-v7:28.0.0'
-    implementation 'com.android.support:support-core-ui:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:support-annotations:28.0.0'
-    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation('com.pixelnetica.sdk:scanning-release:2.3.6') { changing = true }
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.legacy:legacy-preference-v14:1.0.0'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.gridlayout:gridlayout:1.0.0'
+    implementation 'androidx.legacy:legacy-support-core-ui:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.exifinterface:exifinterface:1.1.0'
 }

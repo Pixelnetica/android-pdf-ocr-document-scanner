@@ -7,38 +7,37 @@
     android:orientation="vertical"
     tools:context="${relativePackage}.${activityClass}" >
 
-	<android.support.v7.widget.Toolbar
+	<androidx.appcompat.widget.Toolbar
 		android:id="@+id/app_toolbar"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
 		android:minHeight="?attr/actionBarSize"
 		android:background="?attr/colorPrimary"
 		android:theme="@style/AppTheme.ActionBar"
-		app:theme="@style/AppTheme.ActionBar"
         app:popupTheme="@style/AppTheme.ActionBar.Popup"
 		>
-		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		<LinearLayout
 					  style="?attr/buttonBarStyle"
 					  android:layout_width="fill_parent"
 					  android:layout_height="wrap_content"
 					  android:orientation="horizontal"
 					  android:layout_gravity="center"
 			>
-			<android.support.v7.widget.AppCompatButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_open_image"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="@string/btn_open_image"
 				android:drawableLeft="@drawable/ic_action_picture"/>
-			<android.support.v7.widget.AppCompatButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_take_photo"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="@string/btn_take_photo"
 				android:drawableLeft="@drawable/ic_action_camera"/>
-			<android.support.v7.widget.AppCompatButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_crop_image"
 				android:layout_height="wrap_content"
@@ -46,7 +45,7 @@
 				android:visibility="gone"
 				android:text="@string/btn_crop_image"
 				android:drawableLeft="@drawable/ic_action_crop"/>
-			<android.support.v7.widget.AppCompatButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_save_image"
 				android:layout_height="wrap_content"
@@ -56,7 +55,7 @@
 				android:drawableLeft="@drawable/ic_action_save"/>
 		</LinearLayout>
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <!-- Main image view with progress waiter -->
 	<!--
@@ -96,7 +95,7 @@
 	</FrameLayout>
 
     <!-- Crop button bar -->
-	<android.support.v7.widget.Toolbar
+	<androidx.appcompat.widget.Toolbar
 		android:id="@+id/crop_toolbar"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
@@ -114,30 +113,30 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="center_horizontal"
 			android:background="?attr/colorPrimary">
-			<android.support.v7.widget.AppCompatImageButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_rotate_left"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:src="@drawable/ic_action_rotate_left"/>
-			<android.support.v7.widget.AppCompatImageButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_rotate_right"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:src="@drawable/ic_action_rotate_right"/>
-			<android.support.v7.widget.AppCompatImageButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_revert_selection"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:src="@drawable/ic_action_view_as_grid"/>
-			<android.support.v7.widget.AppCompatImageButton
+			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_expand_selection"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:src="@drawable/ic_action_select_all"/>
 		</LinearLayout>
-	</android.support.v7.widget.Toolbar>
+	</androidx.appcompat.widget.Toolbar>
 </LinearLayout>

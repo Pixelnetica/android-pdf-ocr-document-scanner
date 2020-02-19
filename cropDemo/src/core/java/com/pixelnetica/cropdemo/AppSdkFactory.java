@@ -3,7 +3,7 @@ package com.pixelnetica.cropdemo;
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.pixelnetica.cropdemo.camera.FindDocCornersThread;
 import com.pixelnetica.imagesdk.AutoShotDetector;
