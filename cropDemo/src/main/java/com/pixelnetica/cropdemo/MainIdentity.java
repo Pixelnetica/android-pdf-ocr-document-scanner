@@ -483,7 +483,8 @@ public class MainIdentity extends AndroidViewModel {
 	}
 
 	boolean hasDisplayImage() {
-		return mImageMode != InitNothing && mProcessedImage != null;
+		return mImageMode != InitNothing && mProcessedImage != null
+				&& getDisplayBitmap() != null && !getDisplayBitmap().isRecycled();
 	}
 
 	Bitmap getDisplayBitmap() {

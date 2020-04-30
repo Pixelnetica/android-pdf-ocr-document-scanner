@@ -10,7 +10,7 @@
 	android:paddingBottom="@dimen/activity_vertical_margin"
 	>
 
-	<android.support.v7.widget.AppCompatTextView
+	<androidx.appcompat.widget.AppCompatTextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:text="@string/save_format_title"/>
@@ -18,33 +18,33 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:id="@+id/save_format_group">
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_jpeg"
 			android:text="@string/save_format_jpeg"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_tiff"
 			android:text="@string/save_format_tiff"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_png"
 			android:text="@string/save_format_png"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf"
 			android:text="@string/save_format_pdf"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf_png"
 			android:text="@string/save_format_pdf_png"/>
 	</RadioGroup>
-	<android.support.v7.widget.AppCompatTextView
+	<androidx.appcompat.widget.AppCompatTextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:id="@+id/save_format_pdf_config_title"
@@ -53,28 +53,28 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:id="@+id/save_format_pdf_config_group">
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf_config_default"
 			android:text="@string/save_format_pdf_config_default"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf_config_predefined"
 			android:text="@string/save_format_pdf_config_predefined"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf_config_custom"
 			android:text="@string/save_format_pdf_config_custom"/>
-		<android.support.v7.widget.AppCompatRadioButton
+		<androidx.appcompat.widget.AppCompatRadioButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/save_format_pdf_config_extensible"
 			android:text="@string/save_format_pdf_config_extensible"/>
 	</RadioGroup>
-	<android.support.v7.widget.AppCompatCheckBox
+	<androidx.appcompat.widget.AppCompatCheckBox
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:id="@+id/save_format_simulate_pages"

@@ -42,9 +42,9 @@ android {
         buildConfigField "String", "GIT_HASH", "\"${gitHash}\""
 
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 29
 
-        versionCode 38
+        versionCode 39
         versionName "2.3.6." + versionCode.toString()
 
         ndk {

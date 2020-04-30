@@ -129,6 +129,9 @@ public class CropImageView extends AppCompatImageView {
 			}
 
 			// Scale image to texture
+			if (mBitmap.isRecycled()) {
+				return null;
+			}
 			final Point sourceSize = new Point(mBitmap.getWidth(), mBitmap.getHeight());
 			final Point targetSize = new Point(sourceSize);
 			if (maxTextureSize > 0) {
