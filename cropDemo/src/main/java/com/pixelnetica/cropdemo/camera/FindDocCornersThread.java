@@ -15,6 +15,7 @@ import com.pixelnetica.cropdemo.AppLog;
 import com.pixelnetica.cropdemo.SdkFactory;
 import com.pixelnetica.cropdemo.AppSdkFactory;
 import com.pixelnetica.cropdemo.util.SequentialThread;
+import com.pixelnetica.imagesdk.AutoShotDetector;
 import com.pixelnetica.imagesdk.Corners;
 import com.pixelnetica.imagesdk.ImageProcessing;
 import com.pixelnetica.imagesdk.ImageSdkLibrary;
@@ -37,7 +38,7 @@ public class FindDocCornersThread extends SequentialThread {
 	// Stuff
 	private final SdkFactory mFactory;
 	private SdkFactory.Routine mRoutine;
-	private final com.pixelnetica.imagesdk.AutoShotDetector mShotDetector;
+	private final AutoShotDetector mShotDetector;
 
 	interface FindDocCornersListener {
 		void documentCornersFound(Task task);
@@ -179,8 +180,10 @@ public class FindDocCornersThread extends SequentialThread {
 			return;
 		}
 
-		if (!sdk.validate()) {
+		if (sdk == null || !sdk.validate()) {
 			// Something wrong
+			task.cornerFail = CORNERS_UNCERTAIN;
+			task.documentCorners = null;
 			return;
 		}
 

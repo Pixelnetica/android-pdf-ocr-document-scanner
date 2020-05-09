@@ -19,7 +19,7 @@ import java.lang.annotation.RetentionPolicy;
 
 class ProcessImageTask extends AsyncTask<MetaImage, Void, ProcessImageTask.ProcessImageResult> {
 
-	class ProcessImageResult extends TaskResult {
+	static class ProcessImageResult extends TaskResult {
 		final MetaImage targetImage;
 
 		ProcessImageResult(@NonNull MetaImage targetImage) {
@@ -41,12 +41,13 @@ class ProcessImageTask extends AsyncTask<MetaImage, Void, ProcessImageTask.Proce
 	 * Processing profile
 	 */
 	@Retention(RetentionPolicy.SOURCE)
-	@IntDef(flag = true, value = {NoBinarization, BWBinarization, GrayBinarization, ColorBinarization, ProcessingMask, StrongShadows})
+	@IntDef(flag = true, value = {NoBinarization, BWBinarization, GrayBinarization, ColorBinarization, SimpleRotate, ProcessingMask, StrongShadows})
 	@interface ProcessingProfile {};
 	static final int NoBinarization = 0;
 	static final int BWBinarization = 1;
 	static final int GrayBinarization = 2;
 	static final int ColorBinarization = 3;
+	static final int SimpleRotate = 4;  // Debug only
 
 	static final int ProcessingMask = 0xFF;
 	static final int StrongShadows = 1 << 30;
@@ -72,6 +73,27 @@ class ProcessImageTask extends AsyncTask<MetaImage, Void, ProcessImageTask.Proce
 		this.listener = listener;
 	}
 
+	private Bitmap simpleRotate(Bitmap source, int orientation) {
+		if (source == null) {
+			return null;
+		}
+
+		Matrix matrix = new Matrix();
+		switch (orientation) {
+			case MetaImage.ExifRotate90:
+				matrix.postRotate(90);
+				break;
+			case MetaImage.ExifRotate180:
+				matrix.postRotate(180);
+				break;
+			case MetaImage.ExifRotate270:
+				matrix.postRotate(270);
+				break;
+			// etc... DEBUG only
+		}
+		return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+	}
+
 	@Override
 	protected ProcessImageResult doInBackground(MetaImage... params) {
 		try (SdkFactory.Routine routine = factory.createRoutine()) {
@@ -79,21 +101,7 @@ class ProcessImageTask extends AsyncTask<MetaImage, Void, ProcessImageTask.Proce
 			// DEBUG ONLY!!!
 			if (routine.sdk == null) {
 				// Simple rotate image
-				Matrix matrix = new Matrix();
-				switch (params[0].getExifOrientation()) {
-					case MetaImage.ExifRotate90:
-						matrix.postRotate(90);
-						break;
-					case MetaImage.ExifRotate180:
-						matrix.postRotate(180);
-						break;
-					case MetaImage.ExifRotate270:
-						matrix.postRotate(270);
-						break;
-					// etc... DEBUG only
-				}
-				Bitmap bitmap = params[0].getBitmap();
-				Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+				Bitmap rotated = simpleRotate(params[0].getBitmap(), params[0].getExifOrientation());
 				return new ProcessImageResult(new MetaImage(rotated));
 			}
 
@@ -128,6 +136,10 @@ class ProcessImageTask extends AsyncTask<MetaImage, Void, ProcessImageTask.Proce
 
 				case ColorBinarization:
 					targetImage = routine.sdk.imageColorBinarization(croppedImage);
+					break;
+
+				case SimpleRotate:
+					targetImage = new MetaImage(simpleRotate(croppedImage.getBitmap(), croppedImage.getExifOrientation()));
 					break;
 
 				default:

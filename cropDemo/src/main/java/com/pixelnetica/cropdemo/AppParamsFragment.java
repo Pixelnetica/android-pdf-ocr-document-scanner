@@ -30,13 +30,16 @@ public class AppParamsFragment extends Fragment implements ISettingsFragment {
 		if (savedInstanceState == null) {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 
-			mForceManualCrop.setChecked(preferences.getBoolean(MainIdentity.PREFS_FORCE_MANUAL_CROP, false));
-			mAutoCropOnOpen.setChecked(preferences.getBoolean(MainIdentity.PREFS_AUTO_CROP_ON_OPEN, false));
+			final boolean prefsForceManualCrop = preferences.getBoolean(MainIdentity.PREFS_FORCE_MANUAL_CROP, false);
+			final boolean prefsAutoCropOnOpen = preferences.getBoolean(MainIdentity.PREFS_AUTO_CROP_ON_OPEN, false);
 
-			mAutoCropOnOpen.setVisibility(mForceManualCrop.isChecked() ? View.GONE : View.VISIBLE);
-			mForceManualCrop.setOnCheckedChangeListener((button, checked) -> {
-				mAutoCropOnOpen.setVisibility(checked ? View.GONE : View.VISIBLE);
-			});
+			mForceManualCrop.setChecked(prefsForceManualCrop);
+			mAutoCropOnOpen.setChecked(prefsAutoCropOnOpen);
+
+			// if "Force manual crop" is set, auto crop is nonsense
+			mAutoCropOnOpen.setVisibility(prefsForceManualCrop ? View.INVISIBLE : View.VISIBLE);
+			mForceManualCrop.setOnCheckedChangeListener(
+					(button, checked) -> mAutoCropOnOpen.setVisibility(checked ? View.INVISIBLE : View.VISIBLE));
 		}
 
 		return root;

@@ -1,6 +1,7 @@
 package com.pixelnetica.cropdemo;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -32,10 +33,12 @@ public abstract class SdkFactory {
 	public class Routine implements AutoCloseable {
 		public final ImageProcessing sdk;
 		public final Bundle params;
+		public final Context context;
 
-		Routine(ImageProcessing sdk, Bundle params) {
+		Routine(ImageProcessing sdk, Bundle params, Context context) {
 			this.sdk = sdk;
 			this.params = params;
+			this.context = context;
 		}
 
 		@Override

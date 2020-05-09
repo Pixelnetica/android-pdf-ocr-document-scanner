@@ -38,7 +38,7 @@ public class CropImageView extends AppCompatImageView {
 	private CropData mCropData;
 
 	// Store corners to revert
-	private Corners mInitialCorners;
+	private CropData mInitialCropData;
 
 	private final CutoutDrawable mCutoutDrawable;
 	private final Drawable.Callback mCutoutCallback = new Drawable.Callback() {
@@ -274,11 +274,11 @@ public class CropImageView extends AppCompatImageView {
 	private void setCropData(CropData cropData) {
 		this.mCropData = cropData;
 		if (cropData != null) {
-			mInitialCorners = new Corners(this.mCropData);
+			mInitialCropData = new CropData(this.mCropData);
 			// NOTE: update() inside
 			setBaseMatrix(cropData.getMatrix());
 		} else {
-			mInitialCorners = null;
+			mInitialCropData = null;
 			update();
 		}
 	}
@@ -426,7 +426,11 @@ public class CropImageView extends AppCompatImageView {
 
 	public void revertSelection() {
 		if (mCropData != null) {
-			mCropData.setCorners(mInitialCorners);
+			// Translate initial corners to current orientation
+			CropData cd = new CropData(mInitialCropData);
+			cd.setOrientation(mCropData.getOrientation());
+
+			mCropData.setCorners(cd.points);
 			update();
 		}
 	}

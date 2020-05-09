@@ -36,7 +36,7 @@
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:text="@string/btn_take_photo"
-				android:drawableLeft="@drawable/ic_action_camera"/>
+				android:drawableStart="@drawable/ic_action_camera"/>
 			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_crop_image"
@@ -44,7 +44,7 @@
 				android:layout_width="wrap_content"
 				android:visibility="gone"
 				android:text="@string/btn_crop_image"
-				android:drawableLeft="@drawable/ic_action_crop"/>
+				android:drawableStart="@drawable/ic_action_crop"/>
 			<androidx.appcompat.widget.AppCompatButton
 				style="?attr/buttonBarButtonStyle"
 				android:id="@+id/btn_save_image"
@@ -52,7 +52,7 @@
 				android:layout_width="wrap_content"
 				android:visibility="gone"
 				android:text="@string/btn_save_image"
-				android:drawableLeft="@drawable/ic_action_save"/>
+				android:drawableStart="@drawable/ic_action_save"/>
 		</LinearLayout>
 
     </androidx.appcompat.widget.Toolbar>

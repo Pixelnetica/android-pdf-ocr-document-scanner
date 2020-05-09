@@ -41,72 +41,55 @@ class LoadImageTask extends AsyncTask<Uri, Void, LoadImageTask.LoadImageResult> 
 
 	@NonNull private final SdkFactory factory;
 	@NonNull private final Listener listener;
-	@NonNull private final ContentResolver cr;
 
-	LoadImageTask(@NonNull SdkFactory factory, @NonNull ContentResolver cr, @NonNull Listener listener) {
+	LoadImageTask(@NonNull SdkFactory factory, @NonNull Listener listener) {
 		this.factory = factory;
 		this.listener = listener;
-		this.cr = cr;
 	}
 
 	@Override
 	protected LoadImageResult doInBackground(Uri... uris) {
 		final Uri sourceUri = uris[0];
 
-		try (InputStream inputStream = cr.openInputStream(sourceUri)) {
+		try (SdkFactory.Routine routine = factory.createRoutine();
+		     InputStream inputStream = routine.context.getContentResolver().openInputStream(sourceUri)) {
+
 			Bitmap sourceBitmap = BitmapFactory.decodeStream(inputStream);
 			if (sourceBitmap == null) {
 				// Cannot decode stream
 				return new LoadImageResult(TaskResult.INVALIDFILE, sourceUri);
 			}
 
-			try (SdkFactory.Routine routine = factory.createRoutine()) {
-				if (routine.sdk == null) {
-					return new LoadImageResult(sourceUri, new MetaImage(sourceBitmap, cr, sourceUri));
-				}
+			if (routine.sdk == null) {
+				return new LoadImageResult(sourceUri, new MetaImage(sourceBitmap, routine.context, sourceUri));
+			}
 
-				Point sourceSize = new Point(sourceBitmap.getWidth(), sourceBitmap.getHeight());
-				Point targetSize = routine.sdk.supportImageSize(sourceSize);
-				if (targetSize.x <= 0 || targetSize.y <= 0) {
-					return new LoadImageResult(TaskResult.PROCESSING, sourceUri);
-				}
-
-				// Check OpenGL texture size.
-				/*final int maxTextureSize = getMaximumTextureSize();
-
-				// ImageView cannot show images greater than OpenGL texture
-				final int maxTargetSize = (targetSize.x >  targetSize.y) ? targetSize.x : targetSize.y;
-				if (maxTargetSize > maxTextureSize) {
-					if (maxTargetSize == targetSize.x) {
-						targetSize.y = maxTextureSize * targetSize.y / targetSize.x;
-						targetSize.x = maxTextureSize;
-					} else {
-						targetSize.x = maxTextureSize * targetSize.x / targetSize.y;
-						targetSize.y = maxTextureSize;
-					}
-				}*/
-
-				// Returns same image if size is supported
-				MetaImage sourceImage;
-				if (sourceSize.equals(targetSize)) {
-					sourceImage = new MetaImage(sourceBitmap, cr, sourceUri);
-				} else {
-					Log.d(AppLog.TAG, String.format("Image (%d x %d) too large, scale to (%d x %d)",
-							sourceSize.x, sourceSize.y,
-							targetSize.x, targetSize.y));
-					Bitmap scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, targetSize.x, targetSize.y, true);
-					sourceImage = new MetaImage(scaledBitmap, cr, sourceUri);
-				}
-
-				sourceImage.ensureBitmapMutable();
-				return new LoadImageResult(sourceUri, sourceImage);
-			} catch (Exception|Error e) {
+			Point sourceSize = new Point(sourceBitmap.getWidth(), sourceBitmap.getHeight());
+			Point targetSize = routine.sdk.supportImageSize(sourceSize);
+			if (targetSize.x <= 0 || targetSize.y <= 0) {
 				return new LoadImageResult(TaskResult.PROCESSING, sourceUri);
 			}
+
+			// Returns same image if size is supported
+			MetaImage sourceImage;
+			if (sourceSize.equals(targetSize)) {
+				sourceImage = new MetaImage(sourceBitmap, routine.context, sourceUri);
+			} else {
+				Log.d(AppLog.TAG, String.format("Image (%d x %d) too large, scale to (%d x %d)",
+						sourceSize.x, sourceSize.y,
+						targetSize.x, targetSize.y));
+				Bitmap scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, targetSize.x, targetSize.y, true);
+				sourceImage = new MetaImage(scaledBitmap, routine.context, sourceUri);
+			}
+
+			sourceImage.ensureBitmapMutable();
+			return new LoadImageResult(sourceUri, sourceImage);
 		} catch (IOException e) {
 			return new LoadImageResult(TaskResult.INVALIDFILE, sourceUri);
 		} catch (OutOfMemoryError e) {
 			return new LoadImageResult(TaskResult.OUTOFMEMORY, sourceUri);
+		} catch (Throwable e) {
+			return new LoadImageResult(TaskResult.PROCESSING, sourceUri);
 		}
 	}
 

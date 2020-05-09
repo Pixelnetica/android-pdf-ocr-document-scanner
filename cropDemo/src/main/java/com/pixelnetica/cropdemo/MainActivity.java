@@ -2,7 +2,6 @@ package com.pixelnetica.cropdemo;
 
 
 import com.pixelnetica.cropdemo.camera.CameraActivity;
-import com.pixelnetica.cropdemo.util.Action;
 import com.pixelnetica.cropdemo.util.RuntimePermissions;
 import com.pixelnetica.imagesdk.MetaImage;
 
@@ -12,7 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,12 +19,13 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import android.text.Html;
@@ -77,16 +77,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-	    // Create a new Identity
-	    mIdentity = ViewModelProviders.of(this).get(MainIdentity.class);
-	    mIdentity.executeList.observe(this, actions -> {
-	    	if (actions != null) {
-			    for (Action<MainActivity> action : actions) {
-				    action.run(this);
-			    }
-			    actions.clear();
-		    }
-	    });
+	    // Create and setup Identity
+	    mIdentity = new ViewModelProvider(this).get(MainIdentity.class);
+
+	    mIdentity.onUpdateUI.observe(this, (Void value) -> updateUI());
+	    mIdentity.onErrorMessage.observe(this, this::showProcessingError);
+	    mIdentity.onSaveComplete.observe(this, this::onSaveComplete);
+
 
 	    if (savedInstanceState == null) {
 		    // Setup Identity on startup
@@ -116,13 +113,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mImageView = findViewById(R.id.image_holder);
         mImageView.setSdkFactory(mIdentity.SdkFactory);
 		mProgressWait = findViewById(R.id.progress_wait);
+
+		// Initial update
+	    updateUI();
     }
 
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        return true;// super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     @Override
@@ -321,8 +321,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 	void onTakePhoto() {
-		final File fileSink = //getExternalCacheDir();
-			new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "DI-SDK");
+		final File fileSink = getExternalCacheDir();
+//			new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "DI-SDK");
 
 		// Query permissions and create directories
 		RuntimePermissions.instance().runWithPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -603,12 +603,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void setDisplayImage() {
-    	if (mIdentity.hasDisplayImage()) {
-    		mImageView.setCropImage(mIdentity.getDisplayBitmap(), mIdentity.getImageMatrix(), mIdentity.getCropData());
+	    Bitmap bitmap = mIdentity.queryDisplayBitmap();
+    	if (bitmap != null) {
+    		mImageView.setCropImage(bitmap, mIdentity.getImageMatrix(), mIdentity.getCropData());
 	    } else {
     		mImageView.setCropImage(null, null, null);
 	    }
-	    mIdentity.recycleImage();
     }
 
     public void updateWaitState() {
@@ -636,11 +636,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		return path;
 	}
 
-	public void showProcessingError(@TaskResult.TaskError int error, Uri uri) {
+	public void showProcessingError(@NonNull TaskResult result) {
     	updateUI();
 
 		// Show error toast
-		switch (error) {
+		switch (result.error) {
 			case TaskResult.NOERROR:
 				Toast.makeText(getApplicationContext(), R.string.msg_processing_complete, Toast.LENGTH_SHORT).show();
 				break;
@@ -658,14 +658,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 				break;
 			case TaskResult.INVALIDFILE:
 				Toast.makeText(this, String.format(getString(R.string.msg_cannot_open_file),
-						displayUriPath(getContentResolver(), uri)), Toast.LENGTH_LONG).show();
+						displayUriPath(getContentResolver(), ((LoadImageTask.LoadImageResult) result).sourceUri)), Toast.LENGTH_LONG).show();
 				break;
 			case TaskResult.CANTSAVEFILE:
 				Toast.makeText(this, R.string.msg_cannot_write_image_file, Toast.LENGTH_LONG).show();
 				break;
 			default:
 				Toast.makeText(this,
-						String.format(getString(R.string.msg_unknown_error), error), Toast.LENGTH_LONG).show();
+						String.format(getString(R.string.msg_unknown_error), result.error), Toast.LENGTH_LONG).show();
 				break;
 		}
 	}

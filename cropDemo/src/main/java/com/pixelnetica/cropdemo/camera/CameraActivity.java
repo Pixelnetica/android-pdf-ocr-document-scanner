@@ -496,10 +496,12 @@ public class CameraActivity
 				mFinishing = true;
 			} else {
 				Intent data = new Intent();
-				data.setData(mPictureUris.get(0));
-				if (mPictureUris.size() > 1) {
-					data.putParcelableArrayListExtra(PICTURES_LIST, mPictureUris);
+				// Put last picture to Intent data
+				if (mPictureUris.size() > 0) {
+					data.setData(mPictureUris.get(mPictureUris.size() - 1));
 				}
+				// Put picture list even empty
+				data.putParcelableArrayListExtra(PICTURES_LIST, mPictureUris);
 				setResult(RESULT_OK, data);
 				super.finish();
 			}
@@ -829,8 +831,8 @@ public class CameraActivity
 
 	@Override
 	public void onScanCompleted(String path, Uri uri) {
-
-		mPictureUris.add(uri);
+		// MediaScanner is disabled for internal directories such a cache
+		mPictureUris.add(uri != null ? uri : Uri.fromFile(new File(path)));
 		if (mFinishing && mPictureUris.size() == mPictureFiles.size()) {
 			mMediaScanner.disconnect();
 			mMediaScanner = null;

@@ -48,8 +48,8 @@
     <string name="settings_camera_title">Camera parameters</string>
     <string name="settings_camera_preview_label">Camera preview size</string>
     <string name="settings_camera_serial_shot">Serial shot</string>
-    <string name="settings_app_force_manual_crop">Force manual Crop</string>
-    <string name="settings_app_auto_crop_on_open">Auto-Crop on open</string>
+    <string name="settings_app_force_manual_crop">Force manual crop on image open</string>
+    <string name="settings_app_auto_crop_on_open">Smart-Crop on image open</string>
     <array name="setting_save_formats">
         <!-- Must be in same order as CropDemoApp.SAVE_XXX -->
         <item>Save format JPEG</item>
@@ -85,5 +85,8 @@
     <string name="camera_shot_focus_timeout">Shot failed</string>
     <string name="camera_shot_focus_failed">Cannot focus camera. Try one more time.</string>
     <string name="camera_looking_for_document">Looking for the document</string>
+    <string name="camera_uncertain_detection">"Uncertain detection"</string>
+    <string name="camera_small_area">"Move Camera closer to document"</string>
+    <string name="camera_distorted">"Hold camera parallel to document"</string>
     <string name="title_activity_camera">CropDemo Camera</string>
 </resources>

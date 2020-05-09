@@ -17,8 +17,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 	// Custom Fragments
 	private AppParamsFragment mAppParams;
-	private SdkParamsFragment mSdkParams;
-	private CutoutParamsFragment mCutoutParams;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -37,28 +35,6 @@ public class SettingsActivity extends AppCompatActivity {
 		} else {
 			mAppParams = (AppParamsFragment) getSupportFragmentManager().findFragmentById(
 					R.id.settings_app_params_holder);
-		}
-
-		// Setup cutout params
-		if (savedInstanceState ==  null) {
-			mCutoutParams = new CutoutParamsFragment();
-			getSupportFragmentManager().beginTransaction().add(R.id.settings_cutout_params_holder,
-					mCutoutParams).commit();
-			mCutoutParams.setArguments(args);
-		} else {
-			mCutoutParams = (CutoutParamsFragment) getSupportFragmentManager().findFragmentById(
-					R.id.settings_cutout_params_holder);
-		}
-
-		// Setup FragmentTabHost
-		if (savedInstanceState == null) {
-			mSdkParams = new SdkParamsFragment();
-			getSupportFragmentManager().beginTransaction().add(R.id.settings_sdk_params_holder,
-					mSdkParams).commit();
-			mSdkParams.setArguments(args);
-		} else {
-			mSdkParams = (SdkParamsFragment) getSupportFragmentManager().findFragmentById(
-					R.id.settings_sdk_params_holder);
 		}
 	}
 
@@ -85,15 +61,6 @@ public class SettingsActivity extends AppCompatActivity {
 			// Save general params
 			if (succeeded && mAppParams != null) {
 				succeeded = mAppParams.save(editor);
-			}
-
-			if (succeeded && mCutoutParams != null) {
-				succeeded = mCutoutParams.save(editor);
-			}
-
-			// Save SDK params
-			if (succeeded && mSdkParams != null) {
-				succeeded = mSdkParams.save(editor);
 			}
 
 			editor.apply();

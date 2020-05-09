@@ -1,9 +1,10 @@
 package com.pixelnetica.cropdemo;
 
 import android.app.Application;
+
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.MutableLiveData;
-import android.content.ContentResolver;
+import androidx.lifecycle.LiveData;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -12,13 +13,12 @@ import android.net.Uri;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 
-import com.pixelnetica.cropdemo.util.Action;
+import com.pixelnetica.cropdemo.util.LiveSignal;
 import com.pixelnetica.imagesdk.MetaImage;
 
 import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.pixelnetica.cropdemo.ProcessImageTask.BWBinarization;
@@ -31,28 +31,24 @@ import static com.pixelnetica.cropdemo.ProcessImageTask.BWBinarization;
 
 public class MainIdentity extends AndroidViewModel {
 
-	// Some popular actions
 
-	private Action<MainActivity> actionUpdateUI = new Action<MainActivity>() {
-		@Override
-		public void run(MainActivity activity) {
-			activity.updateUI();
-		}
-	};
+	// Notify activity for total update
+	private LiveSignal<Void> mUpdateUI = new LiveSignal<>();
+	LiveData<Void> onUpdateUI = mUpdateUI;
 
-	private Action<MainActivity> actionUpdateWait = new Action<MainActivity>() {
-		@Override
-		public void run(MainActivity activity) {
-			activity.updateWaitState();
-		}
-	};
+	// Show error message
+	private LiveSignal<TaskResult> mErrorMessage = new LiveSignal<>();
+	LiveData<TaskResult> onErrorMessage = mErrorMessage;
+
+	private LiveSignal<List<SaveImageTask.ImageFile>> mSaveComplete = new LiveSignal<>();
+	LiveData<List<SaveImageTask.ImageFile>> onSaveComplete = mSaveComplete;
 
 	/**
 	 * Application state
 	 */
 	@Retention(RetentionPolicy.SOURCE)
-	@IntDef({InitNothing, Source, /*CropOrigin,*/ Target})
-	@interface ImageMode { };
+	@IntDef({InitNothing, Source, Target})
+	@interface ImageMode { }
 
 	/**
 	 * No image selected. Initial state
@@ -65,14 +61,9 @@ public class MainIdentity extends AndroidViewModel {
 	static final int Source = 1;
 
 	/**
-	 * Image was rotated to original orientation and crop mode on
-	 */
-	//static final int CropOrigin = 2;
-
-	/**
 	 * Processing complete, Save result available
 	 */
-	static final int Target = 3;
+	static final int Target = 2;
 
 	/**
 	 * Main application state
@@ -80,7 +71,6 @@ public class MainIdentity extends AndroidViewModel {
 	private @ImageMode int mImageMode = InitNothing;
 
 	private int mWaitCounter;
-	private boolean mWaitForceUI;
 
 	/**
 	 * Loaded source
@@ -101,21 +91,18 @@ public class MainIdentity extends AndroidViewModel {
 	 * Processed image
 	 */
 	private MetaImage mProcessedImage;
-	private MetaImage mRecycledImage;
 
 	/**
 	 * SDK Factory used to create SDK objects uniformly
 	 */
 	final SdkFactory SdkFactory;
 
-	private final ContentResolver mCR;
-
 	// Always use manual crop
 	private boolean mForceManualCrop;
 	static final String PREFS_FORCE_MANUAL_CROP = "FORCE_MANUAL_CROP";
 
 	// Perform crop when open
-	private boolean mAutoCropOnOpen = true;
+	private boolean mAutoCropOnOpen;
 	static final String PREFS_AUTO_CROP_ON_OPEN = "AUTO_CROP_ON_OPEN";
 
 	// Special mode for some processing
@@ -125,7 +112,6 @@ public class MainIdentity extends AndroidViewModel {
 	@ProcessImageTask.ProcessingProfile
 	private int mProcessingProfile = BWBinarization;
 	private static final String PREFS_PROCESSING_PROFILE = "PROCESSING_PROFILE";
-
 
 	private @SaveImageTask.SaveFormat int mSaveFormat = SaveImageTask.SAVE_TIFF_G4;
 	private static final String PREFS_SAVE_FORMAT = "save_format";
@@ -139,26 +125,10 @@ public class MainIdentity extends AndroidViewModel {
 	public MainIdentity(@NonNull Application application) {
 		super(application);
 		SdkFactory = new AppSdkFactory(application);
-		mCR = application.getContentResolver();
-	}
 
-	/**
-	 * List of commands to perform in controlled activity
-	 */
-	MutableLiveData<List<Action<MainActivity>>> executeList = new MutableLiveData<>();
-
-	private ArrayList<Action<MainActivity>> actionList = new ArrayList<>();
-	private void execute(Action<MainActivity> action, boolean collapse) {
-		if (collapse) {
-			actionList.remove(action);
-		}
-		actionList.add(action);
-
-		executeList.setValue(actionList);
-	}
-
-	private void execute(Action<MainActivity> action) {
-		execute(action, false);
+		// Initialize default settings
+		setForceManualCrop(false);
+		setAutoCropOnOpen(true);
 	}
 
 	void loadSettings() {
@@ -309,7 +279,6 @@ public class MainIdentity extends AndroidViewModel {
 
 	void reset() {
 		mWaitCounter = 0;
-		mWaitForceUI = false;
 
 		mImageMode = InitNothing;
 		mSourceUri = null;
@@ -329,18 +298,18 @@ public class MainIdentity extends AndroidViewModel {
 	private void openImage(Uri imageUri, final Runnable callback) {
 		setWaitStateForceUI(true);
 
-		LoadImageTask task = new LoadImageTask(SdkFactory, mCR, (LoadImageTask imageTask, LoadImageTask.LoadImageResult result) -> {
+		LoadImageTask task = new LoadImageTask(SdkFactory, (LoadImageTask imageTask, LoadImageTask.LoadImageResult result) -> {
 			if (result.hasError()) {
-				showError(result.error, result.sourceUri);
+				setWaitStateForceUI(false);
+				showError(result);
 			} else {
 				mImageMode = Source;
 				mSourceUri = result.sourceUri;
-				mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
 				mProcessedImage = result.loadedImage;
 
 				// openImage can be use to reload
 				// Do not update crop data in this case
-				if (mSourceCropData == null) {
+				if (mSourceCropData == null && mProcessedImage != null) {
 					mSourceCropData = new CropData(mProcessedImage);
 				}
 
@@ -360,7 +329,8 @@ public class MainIdentity extends AndroidViewModel {
 		setWaitStateForceUI(true);
 		DetectDocCornersTask task = new DetectDocCornersTask(SdkFactory, (DetectDocCornersTask docCornersTask, @NonNull DetectDocCornersTask.DocCornersResult result) -> {
 			if (result.hasError()) {
-				showError(result.error, null);
+				setWaitStateForceUI(false);
+				showError(result);
 			} else if (result.isSmartCrop) {
 				// Update corners
 				mSourceCropData.setCorners(result.corners);
@@ -370,12 +340,13 @@ public class MainIdentity extends AndroidViewModel {
 				} else {
 					processSource(mProcessingProfile);
 				}
+				setWaitStateForceUI(false);
 			} else {
 				// Switch back to source mode to show corners
 				mSourceCropData.setCorners(result.corners);
 				mImageMode = Source;
+				setWaitStateForceUI(false);
 			}
-			setWaitStateForceUI(false);
 		});
 		mProcessedImage.setExifOrientation(mSourceCropData.getOrientation());
 		task.execute(mProcessedImage);
@@ -405,10 +376,9 @@ public class MainIdentity extends AndroidViewModel {
 		}
 		ProcessImageTask task = new ProcessImageTask(SdkFactory, mSourceCropData, processing, (ProcessImageTask processImageTask, @NonNull ProcessImageTask.ProcessImageResult result) -> {
 			if (result.hasError()) {
-				showError(result.error, null);
+				showError(result);
 			} else {
 				mImageMode = Target;
-				mRecycledImage = MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
 				mProcessedImage = result.targetImage;
 				mTargetCropData = new CropData(mProcessedImage);
 			}
@@ -448,10 +418,10 @@ public class MainIdentity extends AndroidViewModel {
 
 		boolean newState = mWaitCounter != 0;
 		if (forceUpdateUI) {
-			updateUI();
+			mUpdateUI.call();
 		} else if (prevState != newState) {
 			// Update UI only if wait state was changed
-			execute(actionUpdateWait);
+			mUpdateUI.call();
 		}
 	}
 
@@ -463,37 +433,17 @@ public class MainIdentity extends AndroidViewModel {
 		return mWaitCounter == 0;
 	}
 
-	private void updateUI() {
-		execute(new Action<MainActivity>() {
-			@Override
-			public void run(MainActivity activity) {
-				activity.updateUI();
-			}
-		}, true);
-	}
-
-	private void showError(@TaskResult.TaskError final int error, final Uri uri) {
+	private void showError(final TaskResult error) {
 		// Show only last error
-		execute(new Action<MainActivity>() {
-			@Override
-			public void run(MainActivity activity) {
-				activity.showProcessingError(error, uri);
-			}
-		}, true);
+		mErrorMessage.setValue(error);
 	}
 
-	boolean hasDisplayImage() {
-		return mImageMode != InitNothing && mProcessedImage != null
-				&& getDisplayBitmap() != null && !getDisplayBitmap().isRecycled();
-	}
-
-	Bitmap getDisplayBitmap() {
-		return mProcessedImage.getBitmap();
-	}
-
-	void recycleImage() {
-		MetaImage.safeRecycleBitmap(mRecycledImage, mProcessedImage);
-		mRecycledImage = null;
+	Bitmap queryDisplayBitmap() {
+		if (mImageMode != InitNothing && mProcessedImage != null && !mProcessedImage.isBitmapRecycled()) {
+			return mProcessedImage.getBitmap();
+		} else {
+			return null;
+		}
 	}
 
 	CropData getCropData() {
@@ -502,6 +452,8 @@ public class MainIdentity extends AndroidViewModel {
 				return mSourceCropData;
 			case Target:
 				return mTargetCropData;
+
+			case InitNothing:
 			default:
 				return null;
 		}
@@ -534,20 +486,12 @@ public class MainIdentity extends AndroidViewModel {
 
 	void saveImage(@NonNull Context context) {
 		// No block UI!
-		SaveImageTask task = new SaveImageTask(SdkFactory, new SaveImageTask.Listener() {
-			@Override
-			public void onSaveImageComplete(@NonNull SaveImageTask task, @NonNull final SaveImageTask.SaveImageResult result) {
+		SaveImageTask task = new SaveImageTask(SdkFactory, (@NonNull SaveImageTask _task, @NonNull final SaveImageTask.SaveImageResult result) -> {
 				if (result.hasError()) {
-					showError(result.error, null);
+					showError(result);
 				} else {
-					execute(new Action<MainActivity>() {
-						@Override
-						public void run(MainActivity activity) {
-							activity.onSaveComplete(result.imageFiles);
-						}
-					});
+					mSaveComplete.setValue(result.imageFiles);
 				}
-			}
 		});
 
 		// Build file name

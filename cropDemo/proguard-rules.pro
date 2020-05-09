@@ -21,3 +21,5 @@
 	volatile <fields>;
 	private ** application;
 }
+
+-keep class org.xmlpull.v1.** { *; }
