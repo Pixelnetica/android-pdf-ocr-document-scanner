@@ -1,6 +1,7 @@
 # Built application files
 *.apk
 *.ap_
+*.aab
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -82,3 +83,5 @@ fastlane/readme.md
 # License key file
 # **/license.key
 # license.key
+
+keystore.properties

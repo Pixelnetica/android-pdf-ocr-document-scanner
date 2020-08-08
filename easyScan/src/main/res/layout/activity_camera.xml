@@ -1,0 +1,137 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/black"
+                android:keepScreenOn="true"
+                tools:context="com.pixelnetica.easyscan.camera.CameraActivity">
+
+    <!-- Main camera viewfinder -->
+    <!-- NOTE: Don't set background since Android 25 Nougat -->
+    <com.pixelnetica.easyscan.camera.CameraView
+        android:id="@+id/view_camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cropMode="true"
+        app:extraZoom="1.0"
+        app:focusTimeout="@integer/camera_shot_timeout_ms"
+       />
+
+    <!-- Camera overlay -->
+    <com.pixelnetica.easyscan.camera.CameraOverlay
+        android:id="@+id/view_camera_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:frameWidth="@dimen/camera_overlay_frame_width"
+        app:frameColor="@color/camera_overlay_frame_color"
+        app:alertColor="@color/camera_overlay_alert_color"/>
+
+    <!-- Dark pane on the bottom with shot button and counter -->
+    <RelativeLayout
+        android:id="@+id/pane_camera_shot"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:clickable="true"
+        android:background="@color/camera_toolbar_background"
+        >
+
+        <!-- Main shot button with shot counter, decor images, etc -->
+        <FrameLayout
+            android:id="@+id/wrapper_camera_shot"
+            android:layout_width="@dimen/shutter_size"
+            android:layout_height="@dimen/shutter_size"
+            android:layout_centerInParent="true"
+            android:background="@drawable/shutter_background"
+            >
+
+        <!-- Main shot button -->
+        <ImageButton
+            android:id="@+id/button_camera_shot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/camera_shot_background_selector"
+            android:src="@drawable/camera_shot_button_selector"/>
+
+        <!-- Shot counter -->
+        <TextView
+            style="@style/CameraShotCounter"
+            android:id="@+id/text_shot_counter"
+            android:layout_width="@dimen/shot_counter_size"
+            android:layout_height="@dimen/shot_counter_size"
+            android:layout_gravity="top|right"
+            android:gravity="center"
+            />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <!-- Message console -->
+    <com.pixelnetica.easyscan.widget.console.ConsoleView
+        android:id="@+id/camera_console"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/pane_camera_shot"
+        android:clickable="true"
+        android:background="@color/camera_toolbar_background"
+        />
+
+    <!-- Flash on/off -->
+    <com.pixelnetica.easyscan.widget.ImageCheckBox
+        android:id="@+id/check_camera_flash"
+        android:layout_width="@dimen/camera_button_width"
+        android:layout_height="@dimen/camera_button_height"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/camera_horizontal_margin"
+        android:layout_marginTop="@dimen/camera_vertical_margin"
+        android:src="@drawable/camera_flash_selector"/>
+
+    <!-- Camera shaking overlay. Using non-clickable ImageCheck as background -->
+    <com.pixelnetica.easyscan.widget.ImageCheckBox
+        android:id="@+id/check_shake_overlay"
+        android:layout_width="@dimen/camera_button_width"
+        android:layout_height="@dimen/camera_button_height"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/camera_horizontal_margin"
+        android:layout_marginTop="@dimen/camera_vertical_margin"
+        android:src="@drawable/shake_overlay_selector"
+        android:clickable="false"
+        />
+
+    <!-- shake detector on/off -->
+    <com.pixelnetica.easyscan.widget.ImageCheckBox
+        android:id="@+id/check_camera_stabilizer"
+        android:layout_width="@dimen/camera_button_width"
+        android:layout_height="@dimen/camera_button_height"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/camera_horizontal_margin"
+        android:layout_marginTop="@dimen/camera_vertical_margin"
+        android:src="@drawable/camera_stabilizer_selector"
+        />
+
+    <!-- batch mode button -->
+    <com.pixelnetica.easyscan.widget.ImageCheckBox
+        android:id="@+id/check_camera_batch"
+        android:layout_width="@dimen/camera_button_width"
+        android:layout_height="@dimen/camera_button_height"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/camera_horizontal_margin"
+        android:layout_marginBottom="@dimen/camera_vertical_margin"
+        android:src="@drawable/camera_batch_selector"/>
+
+    <!-- Find document corners on/off -->
+    <com.pixelnetica.easyscan.widget.ImageCheckBox
+        android:id="@+id/check_camera_corners"
+        android:layout_width="@dimen/camera_button_width"
+        android:layout_height="@dimen/camera_button_height"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/camera_horizontal_margin"
+        android:layout_marginBottom="@dimen/camera_vertical_margin"
+        android:src="@drawable/camera_corners_selector"/>
+</RelativeLayout>

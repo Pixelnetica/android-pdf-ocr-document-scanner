@@ -7,6 +7,11 @@ It has been build with [Document Scanning SDK](https://www.pixelnetica.com/produ
 __⚠️ Note.__  
 Application source code provided __“as is”__ without warranties of any kind. It could be freely used in commercial product __only__ in case of commercial DSSDK license purchase. 
 
+## EasyScan on Google Play
+For user convenience full featured version available in Google Play store (as free application).  
+
+📱 [__"EasyScan: PDF Document Scanner"__](https://play.google.com/store/apps/details?id=com.pixelnetica.easyscan).
+
 ## Documentation
 The documentation for DSSDK Android version can be found by the link below:
 
