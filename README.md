@@ -23,7 +23,7 @@ The documentation for DSSDK Android version can be found by the link below:
 To enable or disable AutoCrop just switch `Auto-Crop on open` in `Settings` menu.
 
 ### Build variants
-In order to build the project please utilize only __`debug`__  or __`signed`__ build variants.
+In order to build properly working application please utilize only __`debug`__  or __`signed`__ build variants.
 
 ## License
 
