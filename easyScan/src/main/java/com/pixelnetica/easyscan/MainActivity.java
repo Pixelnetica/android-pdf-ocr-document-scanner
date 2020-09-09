@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -321,8 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 	void onTakePhoto() {
-		final File fileSink = getExternalCacheDir();
-//			new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "DI-SDK");
+		final File fileSink = getCacheDir();
 
 		// Query permissions and create directories
 		RuntimePermissions.instance().runWithPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -499,15 +499,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 	void onSaveComplete(@NonNull List<SaveImageTask.ImageFile> files) {
 		Intent shareIntent = null;
+		ArrayList<Uri> content = new ArrayList<>();
 		if (files.size() == 1) {
 		    Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", new File(files.get(0).filePath));
 		    shareIntent = new Intent(Intent.ACTION_SEND);
 		    shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
 		    shareIntent.setType(files.get(0).mimeType);
-	    } else if (files.size() > 1){
+		    content.add(fileUri);
+	    } else if (files.size() > 1) {
 
 			Pair<String, String> mimeType = null;
-		    ArrayList<Uri> content = new ArrayList<>();
     		for (SaveImageTask.ImageFile file : files) {
 			    Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", new File(file.filePath));
 			    content.add(fileUri);
@@ -530,11 +531,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 			shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
     		shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, content);
     		shareIntent.setType(String.format("%s/%s", mimeType.first, mimeType.second));
+
 	    }
 
 	    if (shareIntent != null) {
 			Intent chooserIntent = Intent.createChooser(shareIntent, getString(R.string.share_output_title));
-		    chooserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		    List<ResolveInfo> resolveList = getPackageManager().queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY);
+		    for (ResolveInfo resolve : resolveList) {
+			    String packageName = resolve.activityInfo.packageName;
+			    for (Uri shareUri : content) {
+				    this.grantUriPermission(packageName, shareUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			    }
+		    }
+
 		    startActivity(chooserIntent);
 	    }
 	}

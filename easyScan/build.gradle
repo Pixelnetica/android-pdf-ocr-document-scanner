@@ -52,8 +52,8 @@ android {
         }
     }
 
-    compileSdkVersion 29
-    buildToolsVersion '30.0.1'
+    compileSdkVersion 30
+    buildToolsVersion '30.0.2'
     defaultConfig {
         applicationId "com.pixelnetica.easyscan"
         // NOTE: Don't change value here. Select build flavor
@@ -61,10 +61,10 @@ android {
         buildConfigField "String", "GIT_HASH", "\"${gitHash}\""
 
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
 
-        versionCode 44
-        versionName "2.3.7." + versionCode.toString()
+        versionCode 45
+        versionName "2.3.8." + versionCode.toString()
 
         // Add build version and git hash to bundle (.aab) file name.
         setProperty("archivesBaseName", "$project.name-v$versionCode-${gitHash}")
@@ -133,13 +133,10 @@ dependencies {
     // Take release library "-SNAPSHOT" behaviour: update every changes, not only version number
     implementation('com.pixelnetica.sdk:scanning-release:2.3.7') { changing = true }
 
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.legacy:legacy-preference-v14:1.0.0'
-    implementation 'androidx.gridlayout:gridlayout:1.0.0'
-    implementation 'androidx.legacy:legacy-support-core-ui:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'androidx.annotation:annotation:1.1.0'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation "androidx.annotation:annotation:1.1.0"
+    implementation "androidx.appcompat:appcompat:1.2.0"
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'androidx.exifinterface:exifinterface:1.2.0'
-    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 }

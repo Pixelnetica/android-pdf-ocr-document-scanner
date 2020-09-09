@@ -495,7 +495,7 @@ public class MainIdentity extends AndroidViewModel {
 		});
 
 		// Build file name
-		final File file = new File(context.getExternalCacheDir(), context.getResources().getString(R.string.processed_images_file,
+		final File file = new File(context.getCacheDir(), context.getResources().getString(R.string.processed_images_file,
 				System.currentTimeMillis(), "xxx"));
 
 		task.execute(new SaveImageTask.SaveImageParam(file.getAbsolutePath(), mProcessedImage, mSaveFormat, mPdfConfig, mSimulatePages));
