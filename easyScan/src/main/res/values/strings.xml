@@ -84,6 +84,7 @@
     <string name="camera_shot_not_stable">Camera is shaking</string>
     <string name="camera_shot_focus_timeout">Shot failed</string>
     <string name="camera_shot_focus_failed">Cannot focus camera. Try one more time.</string>
+    <string name="camera_internal_error">Internal camera error.</string>
     <string name="camera_looking_for_document">Looking for the document</string>
     <string name="camera_uncertain_detection">"Uncertain detection"</string>
     <string name="camera_small_area">"Move Camera closer to document"</string>

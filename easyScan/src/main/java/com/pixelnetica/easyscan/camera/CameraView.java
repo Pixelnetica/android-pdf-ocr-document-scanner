@@ -44,6 +44,7 @@ public class CameraView extends TextureView implements
 		Camera.AutoFocusCallback,
 		Camera.PictureCallback,
 		Camera.PreviewCallback,
+		Camera.ErrorCallback,
 		FindDocCornersThread.FindDocCornersListener
 {
 	public static class TouchParams	{
@@ -73,6 +74,8 @@ public class CameraView extends TextureView implements
 			static final int AUTO_FOCUS_TIMEOUT = 2;
 			// Very strange error
 			static final int SWITCH_MODE_FAILED = 3;
+			// Internal camera error
+			static final int INTERNAL_ERROR = 4;
 		}
 
 		void onPictureError(CameraView inst, int error);
@@ -247,7 +250,12 @@ public class CameraView extends TextureView implements
 		return mShutterRotation;
 	}
 
+	private int mOrientationValue = -1;
+
 	public void setShutterRotation(int orientation) {
+		// Store last orientation value
+		mOrientationValue = orientation;
+
 		if (orientation != -1 && mCamera != null) {
 			// Quantize and normalize orientation
 			orientation = CameraUtils.quantizeDegreeTo360(orientation, 90, 45);
@@ -336,12 +344,16 @@ public class CameraView extends TextureView implements
 
 		// No focus, simple take a picture
 		if (!wantFocus) {
-			mCamera.takePicture(null, null, null, this);
-			mInPreview = false;
-			if (mCallback != null) {
-				mCallback.onCameraReady(this, false);
+			try {
+				mCamera.takePicture(null, null, null, this);
+				mInPreview = false;
+				if (mCallback != null) {
+					mCallback.onCameraReady(this, false);
+				}
+				return true;
+			} catch (RuntimeException e) {
+				return false;
 			}
-			return true;
 		}
 
 		// Setup focus area
@@ -382,12 +394,19 @@ public class CameraView extends TextureView implements
 				paramsModified = true;
 			} else if (res == FOCUS_MODE_UNSUPPORTED) {
 				// Auto focus is not supported. Simple take a picture
-				mCamera.takePicture(null, null, null, this);
-				mInPreview = false;
-				if (mCallback != null) {
-					mCallback.onCameraReady(this, false);
+				if (paramsModified) {
+					mCamera.setParameters(params);
 				}
-				return true;
+				try {
+					mCamera.takePicture(null, null, null, this);
+					mInPreview = false;
+					if (mCallback != null) {
+						mCallback.onCameraReady(this, false);
+					}
+					return true;
+				} catch (RuntimeException e) {
+					return false;
+				}
 			}
 		}
 
@@ -423,11 +442,15 @@ public class CameraView extends TextureView implements
 		if (success) {
 			Log.d(AppLog.TAG, "Auto focus succeeded!");
 			if (mWantShot) {
-				camera.takePicture(null, null, null, this);
-				mInPreview = false;
-			}
-			if (mCallback != null) {
-				mCallback.onCameraReady(this, false);
+				try {
+					camera.takePicture(null, null, null, this);
+					mInPreview = false;
+					if (mCallback != null) {
+						mCallback.onCameraReady(this, false);
+					}
+				} catch (RuntimeException e) {
+					// ....
+				}
 			}
 
 			// NOTE: Workaround Lenovo P1ma40 continuous onAutoFocus() call.
@@ -1187,6 +1210,11 @@ public class CameraView extends TextureView implements
 		}
 
 		if (mCamera != null) {
+			mCamera.setErrorCallback(this);
+
+			// In case no device moving after camera initialization (e.g. emulator)
+			setShutterRotation(mOrientationValue);
+
 			try {
 				mCamera.setPreviewTexture(surface);
 
@@ -1287,6 +1315,15 @@ public class CameraView extends TextureView implements
 		if (mCallback != null) {
 			mCallback.onCameraReady(this, isCameraReady());
 			mCallback.onPictureReady(this, pictureBytes);
+		}
+	}
+
+	@Override
+	public void onError(int error, Camera camera) {
+		if (mCallback != null) {
+			mInPreview = true;  // simulate picture taken
+			mCallback.onCameraReady(this, isCameraReady());
+			mCallback.onPictureError(this, Callback.Error.INTERNAL_ERROR);
 		}
 	}
 
