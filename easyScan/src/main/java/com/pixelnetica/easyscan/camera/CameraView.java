@@ -344,16 +344,12 @@ public class CameraView extends TextureView implements
 
 		// No focus, simple take a picture
 		if (!wantFocus) {
-			try {
-				mCamera.takePicture(null, null, null, this);
-				mInPreview = false;
-				if (mCallback != null) {
-					mCallback.onCameraReady(this, false);
-				}
-				return true;
-			} catch (RuntimeException e) {
-				return false;
+			mCamera.takePicture(null, null, null, this);
+			mInPreview = false;
+			if (mCallback != null) {
+				mCallback.onCameraReady(this, false);
 			}
+			return true;
 		}
 
 		// Setup focus area
@@ -397,16 +393,12 @@ public class CameraView extends TextureView implements
 				if (paramsModified) {
 					mCamera.setParameters(params);
 				}
-				try {
-					mCamera.takePicture(null, null, null, this);
-					mInPreview = false;
-					if (mCallback != null) {
-						mCallback.onCameraReady(this, false);
-					}
-					return true;
-				} catch (RuntimeException e) {
-					return false;
+				mCamera.takePicture(null, null, null, this);
+				mInPreview = false;
+				if (mCallback != null) {
+					mCallback.onCameraReady(this, false);
 				}
+				return true;
 			}
 		}
 
@@ -442,14 +434,10 @@ public class CameraView extends TextureView implements
 		if (success) {
 			Log.d(AppLog.TAG, "Auto focus succeeded!");
 			if (mWantShot) {
-				try {
-					camera.takePicture(null, null, null, this);
-					mInPreview = false;
-					if (mCallback != null) {
-						mCallback.onCameraReady(this, false);
-					}
-				} catch (RuntimeException e) {
-					// ....
+				camera.takePicture(null, null, null, this);
+				mInPreview = false;
+				if (mCallback != null) {
+					mCallback.onCameraReady(this, false);
 				}
 			}
 
@@ -1321,8 +1309,6 @@ public class CameraView extends TextureView implements
 	@Override
 	public void onError(int error, Camera camera) {
 		if (mCallback != null) {
-			mInPreview = true;  // simulate picture taken
-			mCallback.onCameraReady(this, isCameraReady());
 			mCallback.onPictureError(this, Callback.Error.INTERNAL_ERROR);
 		}
 	}

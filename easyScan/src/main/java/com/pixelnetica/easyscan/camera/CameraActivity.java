@@ -881,7 +881,7 @@ public class CameraActivity
 				mConsoleView.getConsole().appendLine(ConsoleTag.FocusFailed, R.string.camera_shot_focus_failed, CONSOLE_DELAY_SHORT);
 				break;
 			case Error.INTERNAL_ERROR:
-				mConsoleView.getConsole().appendLine(ConsoleTag.InternalError, R.string.camera_internal_error, CONSOLE_DELAY_LONG);
+				finish();
 				break;
 		}
 
