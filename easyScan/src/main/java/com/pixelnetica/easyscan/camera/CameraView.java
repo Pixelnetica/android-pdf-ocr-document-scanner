@@ -44,6 +44,7 @@ public class CameraView extends TextureView implements
 		Camera.AutoFocusCallback,
 		Camera.PictureCallback,
 		Camera.PreviewCallback,
+		Camera.ErrorCallback,
 		FindDocCornersThread.FindDocCornersListener
 {
 	public static class TouchParams	{
@@ -73,6 +74,8 @@ public class CameraView extends TextureView implements
 			static final int AUTO_FOCUS_TIMEOUT = 2;
 			// Very strange error
 			static final int SWITCH_MODE_FAILED = 3;
+			// Internal camera error
+			static final int INTERNAL_ERROR = 4;
 		}
 
 		void onPictureError(CameraView inst, int error);
@@ -247,7 +250,12 @@ public class CameraView extends TextureView implements
 		return mShutterRotation;
 	}
 
+	private int mOrientationValue = -1;
+
 	public void setShutterRotation(int orientation) {
+		// Store last orientation value
+		mOrientationValue = orientation;
+
 		if (orientation != -1 && mCamera != null) {
 			// Quantize and normalize orientation
 			orientation = CameraUtils.quantizeDegreeTo360(orientation, 90, 45);
@@ -382,6 +390,9 @@ public class CameraView extends TextureView implements
 				paramsModified = true;
 			} else if (res == FOCUS_MODE_UNSUPPORTED) {
 				// Auto focus is not supported. Simple take a picture
+				if (paramsModified) {
+					mCamera.setParameters(params);
+				}
 				mCamera.takePicture(null, null, null, this);
 				mInPreview = false;
 				if (mCallback != null) {
@@ -425,9 +436,9 @@ public class CameraView extends TextureView implements
 			if (mWantShot) {
 				camera.takePicture(null, null, null, this);
 				mInPreview = false;
-			}
-			if (mCallback != null) {
-				mCallback.onCameraReady(this, false);
+				if (mCallback != null) {
+					mCallback.onCameraReady(this, false);
+				}
 			}
 
 			// NOTE: Workaround Lenovo P1ma40 continuous onAutoFocus() call.
@@ -1187,6 +1198,11 @@ public class CameraView extends TextureView implements
 		}
 
 		if (mCamera != null) {
+			mCamera.setErrorCallback(this);
+
+			// In case no device moving after camera initialization (e.g. emulator)
+			setShutterRotation(mOrientationValue);
+
 			try {
 				mCamera.setPreviewTexture(surface);
 
@@ -1287,6 +1303,13 @@ public class CameraView extends TextureView implements
 		if (mCallback != null) {
 			mCallback.onCameraReady(this, isCameraReady());
 			mCallback.onPictureReady(this, pictureBytes);
+		}
+	}
+
+	@Override
+	public void onError(int error, Camera camera) {
+		if (mCallback != null) {
+			mCallback.onPictureError(this, Callback.Error.INTERNAL_ERROR);
 		}
 	}
 

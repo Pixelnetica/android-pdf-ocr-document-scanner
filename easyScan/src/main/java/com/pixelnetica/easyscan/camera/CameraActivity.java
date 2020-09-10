@@ -880,6 +880,9 @@ public class CameraActivity
 				// Auto focus failed
 				mConsoleView.getConsole().appendLine(ConsoleTag.FocusFailed, R.string.camera_shot_focus_failed, CONSOLE_DELAY_SHORT);
 				break;
+			case Error.INTERNAL_ERROR:
+				finish();
+				break;
 		}
 
 		updateWidgets();
@@ -901,6 +904,7 @@ public class CameraActivity
 		CameraBusy,
 		CameraShaking,
 		FocusFailed,
+		InternalError,
 	}
 
 	@Override
