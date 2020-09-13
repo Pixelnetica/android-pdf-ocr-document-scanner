@@ -38,7 +38,7 @@
     <string name="action_revert_selection">Revert selection</string>
     <string name="action_expand_selection">Expand selection</string>
     <string name="about_title">EasyScan</string>
-    <string name="about_message">%1$s&lt;br&gt;Version %2$s (%3$s)&lt;br&gt;See more on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
+    <string name="about_message">%1$s&lt;br&gt;Version %2$s (%3$s)&lt;br&gt;More on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html?utm_source=easyscan&amp;utm_medium=app_android&amp;utm_campaign=about_scrn&amp;utm_content=dssdk_more_inf&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
     <string name="about_ok">OK</string>
     <string name="camera_activity_title">DI SDK Camera</string>
     <string name="button_camera_shot_desc">Take a shot</string>

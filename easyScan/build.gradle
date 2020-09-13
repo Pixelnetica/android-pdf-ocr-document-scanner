@@ -63,7 +63,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
 
-        versionCode 45
+        versionCode 46
         versionName "2.3.8." + versionCode.toString()
 
         // Add build version and git hash to bundle (.aab) file name.
@@ -130,13 +130,13 @@ configurations.all {
 // gradlew.bat clean build --refresh-dependencies
 
 dependencies {
-    // Take release library "-SNAPSHOT" behaviour: update every changes, not only version number
-    implementation('com.pixelnetica.sdk:scanning-release:2.3.7') { changing = true }
+    // Take release library "-SNAPSHOT" behavior: update every changes, not only version number
+    implementation('com.pixelnetica.sdk:scanning-release:2.3.8') { changing = true }
 
     implementation "androidx.annotation:annotation:1.1.0"
     implementation "androidx.appcompat:appcompat:1.2.0"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'androidx.exifinterface:exifinterface:1.2.0'
-    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 }
