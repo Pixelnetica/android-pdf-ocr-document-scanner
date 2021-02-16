@@ -15,7 +15,7 @@ public class DrawSector {
 	private float startAngle;
 	private float finishAngle;
 	private Paint paint;
-	
+
 	public DrawSector(PointF center, float radius, float startAngle, float finishAngle, Paint paint)
 	{
 		this.center = new PointF();
@@ -25,12 +25,12 @@ public class DrawSector {
 		this.finishAngle = finishAngle;
 		this.paint = paint;
 	}
-	
+
 	public void setPainter(Paint paint)
 	{
 		this.paint = paint;
 	}
-	
+
 	public void draw(Canvas canvas)
 	{
 		float sweepAngle = finishAngle - startAngle;
@@ -47,7 +47,7 @@ public class DrawSector {
 				center.x - radius,
 				center.y - radius,
 				center.x + radius,
-				center.y + radius);				
+				center.y + radius);
 	}
-	
+
 }

@@ -8,12 +8,12 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.graphics.PointF;
 import android.hardware.SensorManager;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 
 import android.util.Log;
@@ -49,7 +49,7 @@ import static com.pixelnetica.easyscan.R.string.permission_query_write_storage;
 
 public class CameraActivity
 		extends AppCompatActivity
-		implements MotionDetector.MotionDetectorCallbacks, CameraView.Callback, MediaScannerConnection.MediaScannerConnectionClient
+		implements MotionDetector.MotionDetectorCallbacks, CameraView.Callback
 {
 	/**
 	 * Intent extra key to directory to write files
@@ -170,11 +170,7 @@ public class CameraActivity
 	/**
 	 * Files
 	 */
-	private final ArrayList<String> mPictureFiles = new ArrayList<>();
 	private final ArrayList<Uri> mPictureUris = new ArrayList<>();
-	private boolean mFinishing; // prevent many finish()
-	private MediaScannerConnection mMediaScanner;
-	private final ArrayList<String> mFilesToScan = new ArrayList<>();
 
 	/**
 	 * Show camera messages
@@ -241,7 +237,7 @@ public class CameraActivity
 
 		// Request directory for pictures
 		mPictureSink = new File(in.getStringExtra(EXTRA_PICTURE_SINK));
-		if (!mPictureSink.exists() || !mPictureSink.isDirectory()) {
+		if (!mPictureSink.exists() || !mPictureSink.isDirectory() || !mPictureSink.canWrite()) {
 			Log.w(AppLog.TAG, "Invalid picture sink specified: " + Utils.toDebugString(mPictureSink));
 			finish();
 		}
@@ -487,29 +483,20 @@ public class CameraActivity
 	@Override
 	public void finish() {
 
-		if (mFinishing) {
-			return;
-		}
-
 		if (mShotCounter > 0) {
-			if (mPictureUris.size() != mPictureFiles.size()) {
-				mFinishing = true;
-			} else {
-				Intent data = new Intent();
-				// Put last picture to Intent data
-				if (mPictureUris.size() > 0) {
-					data.setData(mPictureUris.get(mPictureUris.size() - 1));
-				}
-				// Put picture list even empty
-				data.putParcelableArrayListExtra(PICTURES_LIST, mPictureUris);
-				setResult(RESULT_OK, data);
-				super.finish();
+			Intent data = new Intent();
+			// Put last picture to Intent data
+			if (mPictureUris.size() > 0) {
+				data.setData(mPictureUris.get(mPictureUris.size() - 1));
 			}
+			// Put picture list even empty
+			data.putParcelableArrayListExtra(PICTURES_LIST, mPictureUris);
+			setResult(RESULT_OK, data);
 		} else {
 			// No pictures
 			setResult(RESULT_CANCELED);
-			super.finish();
 		}
+		super.finish();
 	}
 
 	@Override
@@ -773,45 +760,28 @@ public class CameraActivity
 		final File pictureFile = new File(mPictureSink, fileName);
 
 		RuntimePermissions.instance().runWithPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-				permission_query_write_storage, new RuntimePermissions.Callback() {
-					@Override
-					public void permissionRun(String permission, boolean granted) {
-						if (granted) {
-							try (FileOutputStream fos = new FileOutputStream(pictureFile)) {
-								fos.write(pictureBuffer);
-								fos.close();
-							} catch (IOException e) {
-								Log.d(AppLog.TAG, "Cannot process camera picture", e);
-							}
+				permission_query_write_storage, (permission, granted) -> {
+					if (granted) {
+						try (FileOutputStream fos = new FileOutputStream(pictureFile)) {
+							fos.write(pictureBuffer);
+						} catch (IOException e) {
+							Log.d(AppLog.TAG, "Cannot process camera picture", e);
+						}
 
-							// Some camera don't write flash attribute to exif
-							ensureExifFlashMode(pictureFile, view.readFlashMode());
+						// Some cameras don't write attributes to exif
+						ensureExif(pictureFile, view.readFlashMode(), view.readShutterRotation());
 
-							// Some cameras (e.g. Nexus 4) doesn't write exif orientation
-							// Sometimes Nexus put exif orientation, sometimes no
-							//ensureExifOrientation(pictureFile, ExifOrientation.fromRotationAngle(view.readShutterRotation()));
+						// Only really saved images!
+						mShotCounter++;
 
-							// Only really saved images!
-							mShotCounter++;
+						// Notify application for a new image
+						final Uri pictureUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", pictureFile);
+						grantUriPermission(getPackageName(), pictureUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+						mPictureUris.add(pictureUri);
 
-							// Notify application for a new image
-							mPictureFiles.add(pictureFile.getAbsolutePath());
-
-							if (mMediaScanner == null) {
-								mMediaScanner = new MediaScannerConnection(getApplicationContext(), CameraActivity.this);
-								mMediaScanner.connect();
-							}
-
-							if (mMediaScanner.isConnected()) {
-								mMediaScanner.scanFile(pictureFile.getAbsolutePath(), "image/jpeg");
-							} else {
-								mFilesToScan.add(pictureFile.getAbsolutePath());
-							}
-
-							// Close camera activity for single shot mode
-							if (!isBatchMode()) {
-								finish();
-							}
+						// Close camera activity for single shot mode
+						if (!isBatchMode()) {
+							finish();
 						}
 					}
 				});
@@ -820,56 +790,49 @@ public class CameraActivity
 		updateWidgets();
 	}
 
-	@Override
-	public void onMediaScannerConnected() {
-		// Scan pending files
-		for (String path : mFilesToScan) {
-			mMediaScanner.scanFile(path, "image/jpeg");
-		}
-		mFilesToScan.clear();
-	}
+	private static void ensureExif(File pictureFile, boolean flashMode, int rotation) {
 
-	@Override
-	public void onScanCompleted(String path, Uri uri) {
-		// MediaScanner is disabled for internal directories such a cache
-		mPictureUris.add(uri != null ? uri : Uri.fromFile(new File(path)));
-		if (mFinishing && mPictureUris.size() == mPictureFiles.size()) {
-			mMediaScanner.disconnect();
-			mMediaScanner = null;
-
-			mFinishing = false;
-			finish();
-		}
-	}
-
-	private static void ensureExifFlashMode(File pictureFile, boolean flashMode) {
-		if (flashMode) {
-			try {
-				ExifInterface exif = new ExifInterface(pictureFile.getPath());
+		try {
+			boolean changed = false;
+			ExifInterface exif = new ExifInterface(pictureFile);
+			if (flashMode) {
 				final int flashFlag = exif.getAttributeInt(ExifInterface.TAG_FLASH, 0);
 				if (flashFlag == 0) {
 					exif.setAttribute(ExifInterface.TAG_FLASH, "1");
-					exif.saveAttributes();
+					changed = true;
 				}
-			} catch (IOException e) {
-				// Ignore errors
 			}
+
+			int orientation;
+			switch (rotation) {
+				case 0:
+					orientation = ExifInterface.ORIENTATION_NORMAL;
+					break;
+				case 90:
+					orientation = ExifInterface.ORIENTATION_ROTATE_90;
+					break;
+				case 180:
+					orientation = ExifInterface.ORIENTATION_ROTATE_180;
+					break;
+				case 270:
+					orientation = ExifInterface.ORIENTATION_ROTATE_270;
+					break;
+				default:
+					orientation = ExifInterface.ORIENTATION_UNDEFINED;
+			}
+
+			if (orientation != exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)) {
+				exif.setAttribute(ExifInterface.TAG_ORIENTATION, Integer.toString(orientation));
+				changed = true;
+			}
+
+			if (changed) {
+				exif.saveAttributes();
+			}
+		} catch (IOException e) {
+			// Ignore errors
 		}
 	}
-
-	/*private static void ensureExifOrientation(File pictureFile, int orientation) {
-		if (ExifOrientation.isDefined(orientation)) {
-			int fileOrientation = ExifOrientation.readExifOrientation(pictureFile);
-			if (!ExifOrientation.isDefined(fileOrientation)) {
-				Log.w(SharpScanApp.TAG, "No orientation defined in camera file EXIF");
-				try {
-					ExifOrientation.writeExifOrientation(pictureFile, orientation);
-				} catch (IOException e) {
-					Log.w(SharpScanApp.TAG, "Cannot write exif orientation to file " + pictureFile, e);
-				}
-			}
-		}
-	}*/
 
 	@Override
 	public void onPictureError(CameraView view, int error) {

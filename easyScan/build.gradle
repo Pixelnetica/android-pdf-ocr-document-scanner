@@ -43,13 +43,6 @@ android {
             storeFile file("${rootDir}/demo.keystore.jks")
             storePassword '123456'
         }
-        // Signing config which utilize external file properties
-        easyscan {
-//            keyAlias keystoreProperties['keyAlias']
-//            keyPassword keystoreProperties['keyPassword']
-//            storeFile file(keystoreProperties['storeFile'])
-//            storePassword keystoreProperties['storePassword']
-        }
     }
 
     compileSdkVersion 30
@@ -64,7 +57,7 @@ android {
         targetSdkVersion 30
 
         versionCode 46
-        versionName "2.3.8." + versionCode.toString()
+        versionName "2.3.9." + versionCode.toString()
 
         // Add build version and git hash to bundle (.aab) file name.
         setProperty("archivesBaseName", "$project.name-v$versionCode-${gitHash}")
@@ -99,10 +92,61 @@ android {
             initWith release
             matchingFallbacks = ['release']
             // To run release under IDE
-            signingConfig signingConfigs.easyscan
+            signingConfig null  // Will be override later
         }
-
     }
+
+    // Define flavors
+    flavorDimensions 'stage'
+    productFlavors {
+        develop {
+            dimension 'stage'
+        }
+        product {
+            dimension 'stage'
+
+            repositories {
+                maven {
+                    url 'http://repo.pixelnetica.com:8081/artifactory/libs-release'
+                }
+            }
+
+            // Using external file for app signing
+            // Create a variable called keystorePropertiesFile, and initialize it to your
+            // keystore.properties file, in the rootProject folder.
+            def keystorePropertiesFile = rootProject.file("${projectDir}/keystore.properties")
+
+            try {
+                keystorePropertiesFile.withInputStream { stream ->
+                    println "Configure signing flavor"
+
+                    // Initialize a new Properties() object called keystoreProperties.
+                    def keystoreProperties = new Properties()
+
+                    // Load your keystore.properties file into the keystoreProperties object.
+                    keystoreProperties.load(stream)
+
+                    signingConfig = android.signingConfigs.create("${name}")
+                    signingConfig.keyAlias = keystoreProperties['keyAlias']
+                    signingConfig.keyPassword = keystoreProperties['keyPassword']
+                    signingConfig.storeFile = file(keystoreProperties['storeFile'])
+                    signingConfig.storePassword = keystoreProperties['storePassword']
+                }
+            } catch (IOException e) {
+                println "Cannot read playstore properties"
+                signingConfig null
+            }
+        }
+    }
+
+    variantFilter { variant ->
+        // To check for a certain build type, use variant.buildType.name == "<buildType>"
+        if (variant.flavors[0].name == 'develop' && variant.buildType.name == 'playstore') {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+    }
+
 
     // Add build version to apk file name
     applicationVariants.all { variant ->
@@ -112,18 +156,45 @@ android {
     }
 }
 
+// Raise error of no signing config found
+task checkSigningConfig {
+    doLast {
+        android.applicationVariants.all { variant ->
+            assert variant.signingConfig != null
+        }
+    }
+}
+
+// Check signing configuration only for assembleProductPlaystore variant
+project.afterEvaluate {
+    assembleProductPlaystore.dependsOn checkSigningConfig
+}
+
 repositories{
     flatDir{
         dirs 'libs'
-    }
-    maven {
-        url 'http://repo.pixelnetica.com:8081/artifactory/libs-release'
     }
 }
 
 // Lookup dynamic libraries changes every 10 minutes
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor 10, 'minutes'
+
+    // we work with the unreleased development version
+    if (name.contains('develop')) {
+        resolutionStrategy.dependencySubstitution.all { DependencySubstitution dependency ->
+            if (dependency.requested instanceof ModuleComponentSelector) {
+                ModuleComponentSelector selector = (ModuleComponentSelector) dependency.requested
+                if (selector.group == 'com.pixelnetica.sdk' && selector.module == 'scanning-release') {
+                    def targetProject = findProject(':scanning')
+                    if (targetProject != null) {
+                        println "Substitute mobule for configuration $name"
+                        dependency.useTarget targetProject
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Command to refresh dependencies
@@ -131,12 +202,14 @@ configurations.all {
 
 dependencies {
     // Take release library "-SNAPSHOT" behavior: update every changes, not only version number
-    implementation('com.pixelnetica.sdk:scanning-release:2.3.8') { changing = true }
+    implementation('com.pixelnetica.sdk:scanning-release:2.3.9') { changing = true }
+
+    // Dependencies for develop stage
+    developImplementation('androidx.exifinterface:exifinterface:1.3.2')
 
     implementation "androidx.annotation:annotation:1.1.0"
     implementation "androidx.appcompat:appcompat:1.2.0"
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
-    implementation 'androidx.exifinterface:exifinterface:1.2.0'
-    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 }

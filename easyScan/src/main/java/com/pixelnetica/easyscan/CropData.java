@@ -393,4 +393,3 @@ public class CropData extends Corners {
 		points[3].y = Math.round(bounds.y);
 	}
 }
-

@@ -146,5 +146,3 @@ public class CheckableHelper implements Checkable {
 		mOnCheckedChangeListener = listener;
 	}
 }
-
-

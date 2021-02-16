@@ -322,24 +322,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 	void onTakePhoto() {
-		final File fileSink = getCacheDir();
+		final File fileSink = new File(getFilesDir(), "camera_files");
+		fileSink.mkdirs();
 
 		// Query permissions and create directories
 		RuntimePermissions.instance().runWithPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE,
 				R.string.permission_query_write_storage,
-				new RuntimePermissions.Callback() {
-					@Override
-					public void permissionRun(String permission, boolean granted) {
-						if (granted && (fileSink.exists() || fileSink.mkdirs())) {
-							// Common routine to start camera
-							Intent intent = CameraActivity.newIntent(
-									MainActivity.this,
-									mIdentity.SdkFactory,
-									fileSink.getAbsolutePath(),
-									"camera-prefs",
-									true);
-							startActivityForResult(intent, TAKE_PHOTO);
-						}
+				(permission, granted) -> {
+					if (granted && (fileSink.exists() || fileSink.mkdirs())) {
+						// Common routine to start camera
+						Intent intent = CameraActivity.newIntent(
+								MainActivity.this,
+								mIdentity.SdkFactory,
+								fileSink.getAbsolutePath(),
+								"camera-prefs",
+								true);
+						startActivityForResult(intent, TAKE_PHOTO);
 					}
 				});
 	}
