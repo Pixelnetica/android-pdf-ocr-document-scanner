@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.ScanningSdk.EasyScan">
+        <item name="colorPrimary">#FF616161</item>
+        <!-- Also is used for CutoutView -->
+        <item name="colorPrimaryContainer">#FF3f51b5</item>
+        <item name="colorSecondary">#FF3f51b5</item>
+        <item name="android:colorBackground">#FFF5F5F5</item>
+        <item name="colorOnBackground">#de000000</item>
+        <item name="colorOnSurfaceVariant">#FF616161</item>
+    </style>
+
+</resources>

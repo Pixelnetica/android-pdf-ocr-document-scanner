@@ -1,0 +1,920 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "65242b05a0857b56d73e8b13e3c52dda",
+    "entities": [
+      {
+        "tableName": "Page",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`status` TEXT NOT NULL, `initialUri` TEXT, `orderIndex` INTEGER NOT NULL, `errorMessage` TEXT, `dateCreated` INTEGER NOT NULL, `title` TEXT, `orientation` TEXT NOT NULL, `cutout` BLOB, `undefinedCutout` INTEGER NOT NULL DEFAULT 0, `resetCutout` TEXT NOT NULL, `strongShadows` INTEGER NOT NULL, `profileType` INTEGER NOT NULL, `paperSizeId` INTEGER NOT NULL DEFAULT -4, `paperOrientation` TEXT NOT NULL DEFAULT 'Portrait', `pageId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recognitionStatus` INTEGER NOT NULL DEFAULT 0, `recognitionJob` TEXT NOT NULL DEFAULT 'Cancel', `recognitionLanguages` TEXT, `recognitionModifiedText` BLOB)",
+        "fields": [
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "initialUri",
+            "columnName": "initialUri",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "orderIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "errorMessage",
+            "columnName": "errorMessage",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dateCreated",
+            "columnName": "dateCreated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "orientation",
+            "columnName": "orientation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cutout",
+            "columnName": "cutout",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "undefinedCutout",
+            "columnName": "undefinedCutout",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "resetCutout",
+            "columnName": "resetCutout",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "strongShadows",
+            "columnName": "strongShadows",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileType",
+            "columnName": "profileType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paper",
+            "columnName": "paperSizeId",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-4"
+          },
+          {
+            "fieldPath": "paperOrientation",
+            "columnName": "paperOrientation",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Portrait'"
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "pageId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recognitionTask.status",
+            "columnName": "recognitionStatus",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "recognitionTask.job",
+            "columnName": "recognitionJob",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Cancel'"
+          },
+          {
+            "fieldPath": "recognitionTask.languages",
+            "columnName": "recognitionLanguages",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recognitionTask.modifiedText",
+            "columnName": "recognitionModifiedText",
+            "affinity": "BLOB",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "pageId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Representation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`representative` TEXT NOT NULL, `checked` INTEGER NOT NULL DEFAULT 0, `selected` INTEGER NOT NULL DEFAULT 0, `deleteAfter` INTEGER NOT NULL DEFAULT 9223372036854775807, `representationId` INTEGER NOT NULL, PRIMARY KEY(`representationId`, `representative`), FOREIGN KEY(`representationId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "representative",
+            "columnName": "representative",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checked",
+            "columnName": "checked",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "selected",
+            "columnName": "selected",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "deleteAfter",
+            "columnName": "deleteAfter",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "9223372036854775807"
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "representationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "representationId",
+            "representative"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "representationId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Input",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`inputOrientation` TEXT NOT NULL, `inputCutout` BLOB NOT NULL, `inputId` INTEGER NOT NULL, `inputImageFileId` INTEGER NOT NULL, `inputPreviewFileId` INTEGER NOT NULL, PRIMARY KEY(`inputId`), FOREIGN KEY(`inputId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`inputImageFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`inputPreviewFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "inputOrientation",
+            "columnName": "inputOrientation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputCutout",
+            "columnName": "inputCutout",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "inputId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputImageFileId.id",
+            "columnName": "inputImageFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputPreviewFileId.id",
+            "columnName": "inputPreviewFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "inputId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Input_inputId",
+            "unique": false,
+            "columnNames": [
+              "inputId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Input_inputId` ON `${TABLE_NAME}` (`inputId`)"
+          },
+          {
+            "name": "index_Input_inputImageFileId",
+            "unique": false,
+            "columnNames": [
+              "inputImageFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Input_inputImageFileId` ON `${TABLE_NAME}` (`inputImageFileId`)"
+          },
+          {
+            "name": "index_Input_inputPreviewFileId",
+            "unique": false,
+            "columnNames": [
+              "inputPreviewFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Input_inputPreviewFileId` ON `${TABLE_NAME}` (`inputPreviewFileId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "inputId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "inputImageFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "inputPreviewFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Original",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`originalId` INTEGER NOT NULL, `originalImageFileId` INTEGER NOT NULL, `originalPreviewFileId` INTEGER NOT NULL, PRIMARY KEY(`originalId`), FOREIGN KEY(`originalId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`originalImageFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`originalPreviewFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id.id",
+            "columnName": "originalId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalImageFileId.id",
+            "columnName": "originalImageFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalPreviewFileId.id",
+            "columnName": "originalPreviewFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "originalId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Original_originalId",
+            "unique": false,
+            "columnNames": [
+              "originalId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Original_originalId` ON `${TABLE_NAME}` (`originalId`)"
+          },
+          {
+            "name": "index_Original_originalImageFileId",
+            "unique": false,
+            "columnNames": [
+              "originalImageFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Original_originalImageFileId` ON `${TABLE_NAME}` (`originalImageFileId`)"
+          },
+          {
+            "name": "index_Original_originalPreviewFileId",
+            "unique": false,
+            "columnNames": [
+              "originalPreviewFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Original_originalPreviewFileId` ON `${TABLE_NAME}` (`originalPreviewFileId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "originalId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "originalImageFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "originalPreviewFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Pending",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`pendingId` INTEGER NOT NULL, `pendingImageFileId` INTEGER NOT NULL, `pendingPreviewFileId` INTEGER NOT NULL, PRIMARY KEY(`pendingId`), FOREIGN KEY(`pendingId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`pendingImageFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`pendingPreviewFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id.id",
+            "columnName": "pendingId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pendingImageFileId.id",
+            "columnName": "pendingImageFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pendingPreviewFileId.id",
+            "columnName": "pendingPreviewFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "pendingId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Pending_pendingId",
+            "unique": false,
+            "columnNames": [
+              "pendingId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Pending_pendingId` ON `${TABLE_NAME}` (`pendingId`)"
+          },
+          {
+            "name": "index_Pending_pendingImageFileId",
+            "unique": false,
+            "columnNames": [
+              "pendingImageFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Pending_pendingImageFileId` ON `${TABLE_NAME}` (`pendingImageFileId`)"
+          },
+          {
+            "name": "index_Pending_pendingPreviewFileId",
+            "unique": false,
+            "columnNames": [
+              "pendingPreviewFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Pending_pendingPreviewFileId` ON `${TABLE_NAME}` (`pendingPreviewFileId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pendingId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pendingImageFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pendingPreviewFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Complete",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`dateModified` INTEGER NOT NULL, `completeId` INTEGER NOT NULL, `completeImageFileId` INTEGER NOT NULL, `completePreviewFileId` INTEGER NOT NULL, PRIMARY KEY(`completeId`), FOREIGN KEY(`completeId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`completeImageFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`completePreviewFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "dateModified",
+            "columnName": "dateModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "completeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completeImageFileId.id",
+            "columnName": "completeImageFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completePreviewFileId.id",
+            "columnName": "completePreviewFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "completeId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Complete_completeId",
+            "unique": false,
+            "columnNames": [
+              "completeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Complete_completeId` ON `${TABLE_NAME}` (`completeId`)"
+          },
+          {
+            "name": "index_Complete_completeImageFileId",
+            "unique": false,
+            "columnNames": [
+              "completeImageFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Complete_completeImageFileId` ON `${TABLE_NAME}` (`completeImageFileId`)"
+          },
+          {
+            "name": "index_Complete_completePreviewFileId",
+            "unique": false,
+            "columnNames": [
+              "completePreviewFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Complete_completePreviewFileId` ON `${TABLE_NAME}` (`completePreviewFileId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "completeId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "completeImageFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "completePreviewFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Output",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`outputOrientation` TEXT NOT NULL, `estimatedSize` INTEGER NOT NULL, `outputId` INTEGER NOT NULL, `outputFileId` INTEGER NOT NULL, PRIMARY KEY(`outputId`), FOREIGN KEY(`outputId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`outputFileId`) REFERENCES `DataFile`(`fileId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "outputOrientation",
+            "columnName": "outputOrientation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estimatedSize",
+            "columnName": "estimatedSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "outputId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputFileId.id",
+            "columnName": "outputFileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "outputId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Output_outputId",
+            "unique": false,
+            "columnNames": [
+              "outputId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Output_outputId` ON `${TABLE_NAME}` (`outputId`)"
+          },
+          {
+            "name": "index_Output_outputFileId",
+            "unique": false,
+            "columnNames": [
+              "outputFileId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Output_outputFileId` ON `${TABLE_NAME}` (`outputFileId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "outputId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          },
+          {
+            "table": "DataFile",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "outputFileId"
+            ],
+            "referencedColumns": [
+              "fileId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Text",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`original` BLOB NOT NULL, `modified` BLOB NOT NULL, `textId` INTEGER NOT NULL, PRIMARY KEY(`textId`), FOREIGN KEY(`textId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "original",
+            "columnName": "original",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modified",
+            "columnName": "modified",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "textId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "textId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "textId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Recognition",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`progress` INTEGER NOT NULL DEFAULT -1, `lookup` TEXT, `recognitionId` INTEGER NOT NULL, PRIMARY KEY(`recognitionId`), FOREIGN KEY(`recognitionId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-1"
+          },
+          {
+            "fieldPath": "lookup",
+            "columnName": "lookup",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "recognitionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "recognitionId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "recognitionId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "DataFile",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`path` TEXT NOT NULL, `fileId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "path",
+            "columnName": "path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "fileId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "fileId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ShareSession",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`type` TEXT NOT NULL, `progress` INTEGER NOT NULL, `shareSessionId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id.id",
+            "columnName": "shareSessionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "shareSessionId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ShareItem",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shareOrder` INTEGER NOT NULL, `shareItemId` INTEGER NOT NULL, `sharePageId` INTEGER NOT NULL, PRIMARY KEY(`shareItemId`, `shareOrder`), FOREIGN KEY(`shareItemId`) REFERENCES `ShareSession`(`shareSessionId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`sharePageId`) REFERENCES `Page`(`pageId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "shareOrder",
+            "columnName": "shareOrder",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shareItemId.id",
+            "columnName": "shareItemId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageId.id",
+            "columnName": "sharePageId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "shareItemId",
+            "shareOrder"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_ShareItem_shareItemId",
+            "unique": false,
+            "columnNames": [
+              "shareItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ShareItem_shareItemId` ON `${TABLE_NAME}` (`shareItemId`)"
+          },
+          {
+            "name": "index_ShareItem_sharePageId",
+            "unique": false,
+            "columnNames": [
+              "sharePageId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ShareItem_sharePageId` ON `${TABLE_NAME}` (`sharePageId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "ShareSession",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "shareItemId"
+            ],
+            "referencedColumns": [
+              "shareSessionId"
+            ]
+          },
+          {
+            "table": "Page",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sharePageId"
+            ],
+            "referencedColumns": [
+              "pageId"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [
+      {
+        "viewName": "UselessFile",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT fileId FROM DataFile WHERE fileId NOT IN\n        (\n            SELECT inputImageFileId FROM Input UNION\n            SELECT inputPreviewFileId FROM Input UNION\n            SELECT originalImageFileId FROM Original UNION\n            SELECT originalPreviewFileId FROM Original UNION\n            SELECT pendingImageFileId FROM Pending UNION\n            SELECT pendingPreviewFileId FROM Pending UNION\n            SELECT completeImageFileId FROM Complete UNION\n            SELECT completePreviewFileId FROM Complete UNION\n            SELECT outputFileId FROM Output\n        )"
+      },
+      {
+        "viewName": "PageState",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT * FROM Page \n        LEFT JOIN Input ON pageId=inputId \n        LEFT JOIN Original ON pageId=originalId\n        LEFT JOIN Pending ON pageId=pendingId\n        LEFT JOIN Complete ON pageId=completeId\n        LEFT JOIN Output ON pageId=outputId\n        LEFT JOIN Recognition ON pageId=recognitionId"
+      },
+      {
+        "viewName": "ShareItemState",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT * \n            FROM ShareItem\n            INNER JOIN Page ON ShareItem.sharePageId = Page.pageId\n            INNER JOIN Complete ON ShareItem.sharePageId = Complete.completeId\n            INNER JOIN Output ON ShareItem.sharePageId = Output.outputId\n            LEFT JOIN Text ON ShareItem.sharePageId = Text.textId\n        WHERE Page.status = 'Output' AND Page.recognitionStatus < 2"
+      },
+      {
+        "viewName": "PendingShares",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT shareSessionId AS pendingShareSessionId, COUNT(pageId) AS pendingCount\n        FROM ShareSession\n            INNER JOIN (SELECT shareItemId, sharePageId FROM ShareItem) ON shareSessionId = shareItemId\n            LEFT JOIN (SELECT pageId, status, recognitionStatus FROM Page) ON sharePageId = pageId\n                AND status != 'Output' OR recognitionStatus > 1\n        GROUP BY shareSessionId"
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '65242b05a0857b56d73e8b13e3c52dda')"
+    ]
+  }
+}

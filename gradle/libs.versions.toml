@@ -1,0 +1,160 @@
+[versions]
+java = "11"
+pluginsJava = "11"
+minSdk= "21"
+compileSdk = "35"
+targetSdk = "35"
+embeddedScanningSdk = "0"
+
+afAndroidSdk = "6.17.0"
+androidGradlePlugin = "8.9.3"
+androidxActivity = "1.10.1"
+androidxAppCompat = "1.7.0"
+androidxCardview = "1.0.0"
+androidxCompose = "1.8.2"
+androidxComposeCompiler = "1.5.15"
+androidxComposeMaterial3 = "1.3.2"
+androidxConstraintLayout = "2.2.1"
+androidxConstraintLayoutCompose = "1.1.1"
+androidxCore = "1.16.0"
+androidxDatastore = "1.1.7"
+androidxExifinterface = "1.4.1"
+androidxFragmentKtx = "1.8.7"
+androidxHilt = "1.2.0"
+androidxLifecycle = "2.9.0"
+androidxNavigation = "2.9.0"
+androidxPreference = "1.2.1"
+androidxRecyclerView = "1.4.0"
+androidxRoom = "2.7.1"
+androidxSplashscreen = "1.0.1"
+androidxTest = "1.6.1"
+androidxTestEspresso = "3.6.1"
+androidxTestExt = "1.2.1"
+androidxTestRunner = "1.6.2"
+androixResourceInspection = "1.0.1"
+billing="6.1.0"
+camerax = "1.4.2"
+coroutines = "1.8.0"
+crashlytics = "3.0.3"
+databinding = "3.1.4"
+dokka = "1.9.10"
+espressoCore = "3.6.1"
+firebase-ads = "23.6.0"
+firebase-bom = "33.14.0"
+firebase-crashlytics = "19.4.3"
+firebase-messaging = "24.1.1"
+gdata = "1.47.1"
+googleServices = "4.4.2"
+gson = "2.11.0"
+hilt = "2.55"
+installreferrer="2.2"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+kotlin = "2.1.20"
+kotlinx-datetime="0.6.0"
+ksp = "2.1.20-1.0.32"
+material = "1.12.0"
+pixelnetica="3.0.1"
+protobuf = "0.9.5"
+protobufJavalite = "3.23.4"
+
+[libraries]
+gradleplugin-android = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
+gradleplugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
+af-android-sdk = { module = "com.appsflyer:af-android-sdk", version.ref = "afAndroidSdk" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "androidxActivity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppCompat" }
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "androidxCardview" }
+androidx-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "androidxComposeCompiler" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "androidxCompose" }
+androidx-compose-material-icons = { module = "androidx.compose.material:material-icons-extended", version = "1.7.8" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "androidxComposeMaterial3" }
+androidx-compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "androidxCompose" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "androidxCompose" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "androidxCompose" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidxCompose" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "androidxCompose" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidxCompose" }
+androidx-compose-ui-viewbinding = { module = "androidx.compose.ui:ui-viewbinding", version.ref = "androidxCompose" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidxConstraintLayout" }
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "androidxConstraintLayoutCompose" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "androidxDatastore" }
+androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "androidxExifinterface" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "androidxFragmentKtx" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidxHilt" }
+androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "androidxLifecycle" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidxNavigation" }
+androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "androidxNavigation" }
+androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "androidxNavigation" }
+androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "androidxPreference" }
+androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidxRecyclerView" }
+androidx-resourceinspection-annotation = { module = "androidx.resourceinspection:resourceinspection-annotation", version.ref = "androixResourceInspection" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidxRoom" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "androidxRoom" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidxRoom" }
+androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidxSplashscreen" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTest" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing"}
+camerax-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camerax-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+databinding-compiler = { module = "com.android.databinding:compiler", version.ref = "databinding" }
+dokka-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka"}
+firebase-ads = { module = "com.google.firebase:firebase-ads", version.ref = "firebase-ads" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebase-crashlytics" }
+firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk", version.ref = "firebase-crashlytics" }
+firebase-crashlytics-plugin = { module = "com.google.firebase:firebase-crashlytics-gradle", version.ref = "crashlytics"}
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
+gdata-core = { module = "com.google.gdata:core", version.ref = "gdata" }
+google-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+google-material = { module = "com.google.android.material:material", version.ref = "material" }
+google-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+google-services-plugin = { module = "com.google.gms:google-services", version.ref = "googleServices" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+hilt-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hilt" }
+installreferrer = { module = "com.android.installreferrer:installreferrer", version.ref = "installreferrer" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+navigation-safe-args-plugin = { module="androidx.navigation:navigation-safe-args-gradle-plugin", version.ref="androidxNavigation"}
+pixelnetica-camera = { module = "com.pixelnetica.sdk:camera", version.ref = "pixelnetica"}
+pixelnetica-design = { module = "com.pixelnetica.sdk:design", version.ref = "pixelnetica"}
+pixelnetica-scanning = { module = "com.pixelnetica.sdk:scanning", version.ref = "pixelnetica"}
+pixelnetica-support = { module = "com.pixelnetica.sdk:support", version.ref = "pixelnetica"}
+protobuf-plugin= {module="com.google.protobuf:protobuf-gradle-plugin", version.ref="protobuf"}
+test-junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+compose-compiler = {id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+hilt-gradle = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+navigation-safe-args = { id = "androidx.navigation.safeargs.kotlin", version.ref = "androidxNavigation" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+publish = { id = "maven-publish", version.ref = "androidGradlePlugin" }

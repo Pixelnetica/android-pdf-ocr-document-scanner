@@ -1,13 +1,9 @@
 # Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in C:\Android\sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.
 #
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
-
-# Add any project specific keep options here:
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
@@ -16,10 +12,27 @@
 #   public *;
 #}
 
--keep class com.pixelnetica.docimageproc.** {
-	public *;
-	volatile <fields>;
-	private ** application;
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
+
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
+#-renamesourcefileattribute SourceFile
+
+# XmlPullParser ussue
+# https://issuetracker.google.com/issues/247066506#comment17
+-keep class android.content.res.XmlResourceParser
+-keep class org.xmlpull.v1.XmlPullParser { *; }
+-dontwarn android.content.res.**
+
+# ProtoBuf compiler issue
+-assumevalues class com.google.protobuf.Android { static boolean ASSUME_ANDROID return true; }
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+  <fields>;
 }
 
--keep class org.xmlpull.v1.** { *; }
+# Gson library
+-keep class com.google.gson.reflect.TypeToken
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep public class * implements java.lang.reflect.Type

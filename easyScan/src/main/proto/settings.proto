@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option java_package = "com.pixelnetica.easyscan";
+option java_multiple_files = true;
+
+message UserProcessing {
+  enum ColorProfile {
+    ORIGINAL = 0;
+    BITONAL = 1;
+    MONOCHROME = 2;
+    COLORED = 3;
+  }
+  ColorProfile profile = 1;
+  bool strong_shadows = 2;
+}
+
+message PaperProperties {
+  // As stored in the DB: a positive value for DB, a negative value for predefined
+  int64 id = 1;
+
+  // Must be equals Page.Paper.Orientation
+  enum Orientation {
+    AUTO = 0;
+    PORTRAIT = 1;
+    LANDSCAPE = 2;
+  }
+
+  Orientation orientation = 2;
+}
+
+message AppSettings {
+
+  enum AppTheme {
+    AUTO = 0;
+    LIGHT = 1;
+    DARK = 2;
+  }
+
+  AppTheme app_theme = 1;
+  bool dynamic_colors = 2;
+  bool standard_theme = 3;
+  bool auto_detect_orientation = 4;
+  reserved 5; // Remove "write_pdf_using_file"
+  bool show_pdf_hidden_text = 6;
+
+  enum ImageCompression {
+    LOSSLESS = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+    EXTREME = 4;
+  }
+  ImageCompression image_compression = 7;
+}

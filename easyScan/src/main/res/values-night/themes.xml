@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ScanningSdk.EasyScan">
+        <item name="colorPrimary">#FF8e8e8e</item>
+        <item name="colorPrimaryContainer">#FF3f51b5</item>
+        <item name="colorSecondary">#FF757de8</item>
+        <item name="colorTertiary">#FF3f51b5</item>
+    </style>
+
+</resources>

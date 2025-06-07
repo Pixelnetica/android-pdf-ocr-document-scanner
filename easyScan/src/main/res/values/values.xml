@@ -1,14 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- set 0 to disable animation -->
-    <integer name="camera_buttons_rotate_duration_ms">500</integer>
-    <bool name="camera_shot_on_touch">true</bool>
-    <bool name="camera_flash_mode">true</bool>
-    <bool name="camera_stab_mode">true</bool>
-    <bool name="camera_show_document">true</bool>
-    <integer name="camera_shot_timeout_ms">9000</integer>
 
-    <integer name="auto_shot_radius_100">7</integer>
-    <integer name="auto_shot_delay_ms">1000</integer>
-    <integer name="auto_shot_count">3</integer>
+    <string-array name="bytes_plurals">
+        <item>@string/bytes_plurals_bytes</item>
+        <item>@string/bytes_plurals_kb</item>
+        <item>@string/bytes_plurals_mb</item>
+        <item>@string/bytes_plurals_gb</item>
+        <item>@string/bytes_plurals_tb</item>
+    </string-array>
+
+    <string-array name="paper_sizes">
+        <!-- NOTE: Must be same order as Page.PaperSize.Predefined.Size -->
+        <item>@string/paper_size_letter</item>
+        <item>@string/paper_size_legal</item>
+        <item>@string/paper_size_a3</item>
+        <item>@string/paper_size_a4</item>
+        <item>@string/paper_size_a5</item>
+        <item>@string/paper_size_b4</item>
+        <item>@string/paper_size_b5</item>
+        <item>@string/paper_size_executive</item>
+        <item>@string/paper_size_us4x6</item>
+        <item>@string/paper_size_us4x8</item>
+        <item>@string/paper_size_us5x7</item>
+        <item>@string/paper_size_comm10</item>
+        <item>@string/paper_size_business_card</item>
+    </string-array>
+
+    <string name="paper_size_id_letter" translatable="false">letter</string>
+    <string name="paper_size_id_legal" translatable="false">legal</string>
+    <string name="paper_size_id_a3" translatable="false">A3</string>
+    <string name="paper_size_id_a4" translatable="false">A4</string>
+    <string name="paper_size_id_a5" translatable="false">A5</string>
+    <string name="paper_size_id_b4" translatable="false">B4</string>
+    <string name="paper_size_id_b5" translatable="false">B5</string>
+    <string name="paper_size_id_executive" translatable="false">executive</string>
+    <string name="paper_size_id_us4x6" translatable="false">us4x6</string>
+    <string name="paper_size_id_us4x8" translatable="false">us4x8</string>
+    <string name="paper_size_id_us5x7" translatable="false">us5x7</string>
+    <string name="paper_size_id_comm10" translatable="false">comm10</string>
+    <string name="paper_size_id_business_card" translatable="false">business_card</string>
+
+    <!-- List equals Page.Paper.Predefined.Id -->
+    <string-array name="paper_size_id_list">
+        <item>@string/paper_size_id_letter</item>
+        <item>@string/paper_size_id_legal</item>
+        <item>@string/paper_size_id_a3</item>
+        <item>@string/paper_size_id_a4</item>
+        <item>@string/paper_size_id_a5</item>
+        <item>@string/paper_size_id_b4</item>
+        <item>@string/paper_size_id_b5</item>
+        <item>@string/paper_size_id_executive</item>
+        <item>@string/paper_size_id_us4x6</item>
+        <item>@string/paper_size_id_us4x8</item>
+        <item>@string/paper_size_id_us5x7</item>
+        <item>@string/paper_size_id_comm10</item>
+        <item>@string/paper_size_id_business_card</item>
+    </string-array>
+
+    <!-- Ordered list to show in dialog -->
+    <string-array name="paper_size_id_display">
+        <item>@string/paper_size_id_a3</item>
+        <item>@string/paper_size_id_a4</item>
+        <item>@string/paper_size_id_a5</item>
+        <item>@string/paper_size_id_b4</item>
+        <item>@string/paper_size_id_b5</item>
+        <item>@string/paper_size_id_business_card</item>
+        <item>@string/paper_size_id_letter</item>
+        <item>@string/paper_size_id_legal</item>
+    </string-array>
+
+    <string-array name="page_props_paper_orientation_list">
+        <!-- NOTE: Must be same order as Page.PaperSize.Orientation -->
+        <item>@string/page_props_paper_orientation_auto</item>
+        <item>@string/page_props_paper_orientation_portrait</item>
+        <item>@string/page_props_paper_orientation_landscape</item>
+    </string-array>
+
+    <string-array name="settings_app_themes">
+        <item>@string/action_app_theme_auto</item>
+        <item>@string/action_app_theme_light</item>
+        <item>@string/action_app_theme_dark</item>
+    </string-array>
+
+    <string-array name="settings_pdf_image_compression_levels">
+        <item>@string/settings_pdf_image_compression_lossless</item>
+        <item>@string/settings_pdf_image_compression_low</item>
+        <item>@string/settings_pdf_image_compression_medium</item>
+        <item>@string/settings_pdf_image_compression_high</item>
+        <item>@string/settings_pdf_image_compression_extreme</item>
+    </string-array>
+
 </resources>

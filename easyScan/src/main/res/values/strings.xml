@@ -1,93 +1,114 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" tools:ignore="MissingTranslation">EasyScan</string>
+    <string name="add_from_album" tools:ignore="MissingTranslation">Add from Gallery</string>
+    <string name="share_all_pages" tools:ignore="MissingTranslation">Share all pages</string>
+    <string name="action_settings" tools:ignore="MissingTranslation">Settings</string>
+    <string name="fab_desc" tools:ignore="MissingTranslation">Scan document with camera</string>
+    <string name="loading" tools:ignore="MissingTranslation">Loading…</string>
 
-    <string name="app_name">EasyScan</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="btn_open_image">Open</string>
-    <string name="btn_take_photo">Shot</string>
-    <string name="btn_crop_image">Crop</string>
-    <string name="btn_save_image">Save</string>
-    <string name="action_force_manual_crop">Manual crop</string>
-    <string name="action_using_fx_sdk">Use FX SDK</string>
-    <string name="action_strong_shadows">Strong shadows</string>
-    <string name="action_about">About</string>
-    <string name="select_picture_title">Select Picture</string>
-    <string name="msg_bad_external_storage">No available storage found.</string>
-    <string name="msg_processing_complete">Processing complete</string>
-    <string name="msg_processing_error">Processing error</string>
-    <string name="msg_no_doc_corners">No document corners found</string>
-    <string name="msg_invalid_corners">Document corners are invalid</string>
-    <string name="msg_out_of_memory">Out of memory!</string>
-    <string name="msg_cannot_open_file">Cannot open image file\n%1$s</string>
-    <string name="msg_image_file_info">Open image file %1$4dx%2$4d\n%3$s</string>
-    <string name="msg_cannot_write_image_file">Cannot save image</string>
-    <string name="msg_unknown_error">Unknown error %1$d</string>
-    <string name="processed_images_album">/com.pixelnetica.imagedemo/media/Pixelnetica</string>
-    <string name="processed_images_file">easyscan%1$016x.%2$s</string>
-    <string name="share_output_title">Share DI SDK output</string>
+    <string name="page_list_page_invalid_title" tools:ignore="MissingTranslation">Page processing failed</string>
+    <string name="page_list_page_initial_title" translatable="false">@string/loading</string>
+    <string name="page_list_page_source_title" tools:ignore="MissingTranslation">Cropping…</string>
+    <string name="page_list_page_pending_title" tools:ignore="MissingTranslation">Processing…</string>
 
-    <string name="msg_cannot_save_file">Cannot save processed image</string>
-    <string name="action_settings">Settings</string>
-    <string name="action_profile_group">Processing profile</string>
-    <string name="action_profile_nobinarization">Original</string>
-    <string name="action_profile_bwbinarization">Black &amp; White</string>
-    <string name="action_profile_graybinarization">Gray</string>
-    <string name="action_profile_colorbinarization">Color</string>
-    <string name="action_rotate_left">Rotate left</string>
-    <string name="action_rotate_right">Rotate right</string>
-    <string name="action_revert_selection">Revert selection</string>
-    <string name="action_expand_selection">Expand selection</string>
-    <string name="about_title">EasyScan</string>
-    <string name="about_message">%1$s&lt;br&gt;Version %2$s (%3$s)&lt;br&gt;More on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html?utm_source=EasyScan&amp;utm_medium=app-android&amp;utm_campaign=scr-about&amp;utm_content=dssdk-overview&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
-    <string name="about_ok">OK</string>
-    <string name="camera_activity_title">DI SDK Camera</string>
-    <string name="button_camera_shot_desc">Take a shot</string>
-    <string name="check_camera_settings_desc">Find document corners</string>
-    <string name="msg_looking_for_document">Looking for document</string>
-    <string name="settings_title">Settings</string>
-    <string name="settings_camera_title">Camera parameters</string>
-    <string name="settings_camera_preview_label">Camera preview size</string>
-    <string name="settings_camera_serial_shot">Serial shot</string>
-    <string name="settings_app_force_manual_crop">Force manual crop on image open</string>
-    <string name="settings_app_auto_crop_on_open">Smart-Crop on image open</string>
-    <array name="setting_save_formats">
-        <!-- Must be in same order as CropDemoApp.SAVE_XXX -->
-        <item>Save format JPEG</item>
-        <item>Save format Tiff G4</item>
-        <item>Save format PNG</item>
-        <item>Save format PDF</item>
-        <item>Save format PDF/PNG (BW only!)</item>
-    </array>
-    <string name="save_format_title">Save format</string>
-    <string name="save_format_jpeg">JPEG</string>
-    <string name="save_format_tiff">TIFF G4</string>
-    <string name="save_format_png">PNG</string>
-    <string name="save_format_pdf">PDF</string>
-    <string name="save_format_pdf_png">PDF/PNG</string>
-    <string name="save_format_pages">Simulate multi pages</string>
-    <string name="save_format_simulate_pages">Simulate multiple pages</string>
-	<string name="save_format_pdf_config_title">Some PDF page configurations</string>
-	<string name="save_format_pdf_config_default">Default</string>
-	<string name="save_format_pdf_config_predefined">Predefined (half letter)</string>
-	<string name="save_format_pdf_config_custom">Custom (eq. A5)</string>
-	<string name="save_format_pdf_config_extensible">Extensible</string>
-    <string name="settings_simulate_pages">Simulate multiple pages</string>
-    <string name="settings_camera_fullness_rate">Area rate</string>
-    <string name="settings_camera_distortion_rate">Distortion rate</string>
-    <string name="settings_camera_second_aspect">Area second aspect</string>
-    <string name="settings_camera_second_rate">Area second rate</string>
-    <string name="permission_query_read_storage">Allow EasyScan to access photos and files on your device?</string>
-    <string name="permission_query_write_storage">Allow EasyScan to write files to your device?</string>
-    <string name="permission_query_camera">Allow EasyScan to take pictures and record video?</string>
+    <string name="recognized_label_ready" translatable="false">TXT</string>
+    <string name="recognized_label_pending" translatable="false">TXT…</string>
+    <string name="recognized_label_percent" translatable="false">TXT %1$d%%</string>
 
-    <string name="camera_shot_busy">Camera busy</string>
-    <string name="camera_shot_not_stable">Camera is shaking</string>
-    <string name="camera_shot_focus_timeout">Shot failed</string>
-    <string name="camera_shot_focus_failed">Cannot focus camera. Try one more time.</string>
-    <string name="camera_internal_error">Internal camera error.</string>
-    <string name="camera_looking_for_document">Looking for the document</string>
-    <string name="camera_uncertain_detection">"Uncertain detection"</string>
-    <string name="camera_small_area">"Move Camera closer to document"</string>
-    <string name="camera_distorted">"Hold camera parallel to document"</string>
-    <string name="title_activity_camera">EasyScan Camera</string>
+    <string name="msg_cutout_invalid" tools:ignore="MissingTranslation">Cannot accept the invalid contour.</string>
+
+    <string name="checked_pages_select_all" tools:ignore="MissingTranslation">Select All</string>
+    <string name="checked_pages_share" tools:ignore="MissingTranslation">Share</string>
+    <string name="checked_pages_delete" tools:ignore="MissingTranslation">Delete</string>
+
+    <string name="page_camera" tools:ignore="MissingTranslation">Insert new page</string>
+    <string name="page_add_from_album" tools:ignore="MissingTranslation">Add from Gallery</string>
+    <string name="page_share" tools:ignore="MissingTranslation">Share Page</string>
+    <string name="page_delete" tools:ignore="MissingTranslation">Delete page</string>
+    <string name="page_props" tools:ignore="MissingTranslation">Page properties</string>
+    <string name="page_props_paper_label" tools:ignore="MissingTranslation">Paper size</string>
+
+    <string name="page_color_strong_shadows" tools:ignore="MissingTranslation">Strong Shadows</string>
+    <string name="page_color_original" tools:ignore="MissingTranslation">Original</string>
+    <string name="page_color_binary" tools:ignore="MissingTranslation">Black &amp; White</string>
+    <string name="page_color_gray" tools:ignore="MissingTranslation">Gray</string>
+    <string name="page_color_color" tools:ignore="MissingTranslation">Color</string>
+    <string name="page_view_progress_label" translatable="false">@string/loading</string>
+    <string name="page_read_analyze_label" tools:ignore="MissingTranslation">Analyzing…</string>
+    <string name="page_read_recognize_label" tools:ignore="MissingTranslation">Recognition</string>
+
+    <string name="title_activity_crop" tools:ignore="MissingTranslation">Crop Image</string>
+    <string name="title_activity_read" tools:ignore="MissingTranslation">Recognize</string>
+    <string name="btn_read_languages" tools:ignore="MissingTranslation">Languages</string>
+    <string name="btn_read_update" tools:ignore="MissingTranslation">Refresh</string>
+    <string name="btn_read_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="msg_read_undo_text" tools:ignore="MissingTranslation">Undo %1$s?</string>
+    <string name="msg_read_different_languages" tools:ignore="MissingTranslation">Text was recognized with other languages %1$s</string>
+    <string name="action_read_update" tools:ignore="MissingTranslation">Refresh?</string>
+
+    <string name="recognize_filter" tools:ignore="MissingTranslation">&lt;Created by EasyScan&gt;</string>
+
+    <string name="share_page_title" tools:ignore="MissingTranslation">Share page</string>
+    <string name="share_pages_title" tools:ignore="MissingTranslation">Share pages</string>
+    <string name="share_as_image" tools:ignore="MissingTranslation">as Image</string>
+    <string name="share_as_tiff" tools:ignore="MissingTranslation">as TIFF</string>
+    <string name="share_as_pdf" tools:ignore="MissingTranslation">as PDF</string>
+    <string name="share_as_text" tools:ignore="MissingTranslation">as Text</string>
+
+    <string name="bytes_plurals_bytes" tools:ignore="MissingTranslation">" bytes"</string>
+    <string name="bytes_plurals_kb" tools:ignore="MissingTranslation" translatable="false">" KB"</string>
+    <string name="bytes_plurals_mb" tools:ignore="MissingTranslation" translatable="false">" MB"</string>
+    <string name="bytes_plurals_gb" tools:ignore="MissingTranslation" translatable="false">" GB"</string>
+    <string name="bytes_plurals_tb" tools:ignore="MissingTranslation" translatable="false">" TB"</string>
+
+    <string name="paper_size_letter" tools:ignore="MissingTranslation" translatable="false">Letter</string>
+    <string name="paper_size_legal" tools:ignore="MissingTranslation" translatable="false">Legal</string>
+    <string name="paper_size_a3" tools:ignore="MissingTranslation" translatable="false">A3</string>
+    <string name="paper_size_a4" tools:ignore="MissingTranslation" translatable="false">A4</string>
+    <string name="paper_size_a5" tools:ignore="MissingTranslation" translatable="false">A5</string>
+    <string name="paper_size_b4" tools:ignore="MissingTranslation" translatable="false">B4</string>
+    <string name="paper_size_b5" tools:ignore="MissingTranslation" translatable="false">B5</string>
+    <string name="paper_size_executive" tools:ignore="MissingTranslation" translatable="false">Executive</string>
+    <string name="paper_size_us4x6" tools:ignore="MissingTranslation" translatable="false">US4x6</string>
+    <string name="paper_size_us4x8" tools:ignore="MissingTranslation" translatable="false">US4x8</string>
+    <string name="paper_size_us5x7" tools:ignore="MissingTranslation" translatable="false">US5x7</string>
+    <string name="paper_size_comm10" tools:ignore="MissingTranslation" translatable="false">COMM10</string>
+    <string name="paper_size_business_card" tools:ignore="MissingTranslation">Business Card</string>
+
+    <string name="page_props_paper_orientation" tools:ignore="MissingTranslation">Paper orientation</string>
+    <string name="page_props_paper_orientation_auto" tools:ignore="MissingTranslation">Auto</string>
+    <string name="page_props_paper_orientation_portrait" tools:ignore="MissingTranslation">Portrait</string>
+    <string name="page_props_paper_orientation_landscape" tools:ignore="MissingTranslation">Landscape</string>
+
+    <string name="page_recognize_text" tools:ignore="MissingTranslation">Recognize text</string>
+
+    <string name="settings_change_app_theme" tools:ignore="MissingTranslation">Application theme</string>
+    <string name="action_app_theme_auto" tools:ignore="MissingTranslation">Auto</string>
+    <string name="action_app_theme_light" tools:ignore="MissingTranslation">Light</string>
+    <string name="action_app_theme_dark" tools:ignore="MissingTranslation">Dark</string>
+    <string name="settings_dynamic_colors" tools:ignore="MissingTranslation">Dynamic colors</string>
+    <string name="settings_auto_detect_orientation" tools:ignore="MissingTranslation">Try to detect an image orientation.</string>
+    <string name="settings_write_pdf_using_file" tools:ignore="MissingTranslation">Write a PDF using a file (deprecated).</string>
+    <string name="settings_show_pdf_hidden_text" tools:ignore="MissingTranslation">Show a PDF hidden text.</string>
+    <string name="settings_pdf_image_compression" tools:ignore="MissingTranslation">PDF images compression level</string>
+    <string name="settings_pdf_image_compression_lossless" tools:ignore="MissingTranslation">Lossless</string>
+    <string name="settings_pdf_image_compression_low" tools:ignore="MissingTranslation">Low</string>
+    <string name="settings_pdf_image_compression_medium" tools:ignore="MissingTranslation">Medium</string>
+    <string name="settings_pdf_image_compression_high" tools:ignore="MissingTranslation">High</string>
+    <string name="settings_pdf_image_compression_extreme" tools:ignore="MissingTranslation">Extreme</string>
+    <string name="about_message" tools:ignore="MissingTranslation" translatable="false">%1$s&lt;br&gt;Version %2$s (%3$s)&lt;br&gt;More on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html?utm_source=EasyScan&amp;utm_medium=app-android&amp;utm_campaign=scr-about&amp;utm_content=dssdk-overview&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
+
+    <string name="licence_dialog_title" tools:ignore="MissingTranslation">Check Licence</string>
+    <string name="licence_dialog_validate_png" tools:ignore="MissingTranslation" translatable="false">PNG</string>
+    <string name="licence_dialog_validate_tiff" tools:ignore="MissingTranslation" translatable="false">TIFF</string>
+    <string name="licence_dialog_validate_pdf" tools:ignore="MissingTranslation" translatable="false">PDF</string>
+    <string name="licence_dialog_validate_ocr" tools:ignore="MissingTranslation" translatable="false">OCR</string>
+    <string name="licence_dialog_validate_features" tools:ignore="MissingTranslation" translatable="false">Select boxes below to validate features.</string>
+    <string name="licence_dialog_validation_passed" tools:ignore="MissingTranslation" translatable="false">Passed</string>
+    <string name="licence_dialog_validation_failed" tools:ignore="MissingTranslation">Failed</string>
+
+    <!-- To demonstrate resource overloading -->
+    <!-- Don't forget overload for all supported languages -->
+    <string name="px_camera_find_corners_delay">EasyScan is waiting for the next page for %1$3.1f sec.</string>
+
 </resources>
