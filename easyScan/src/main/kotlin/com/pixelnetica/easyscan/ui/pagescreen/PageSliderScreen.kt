@@ -3,12 +3,13 @@ package com.pixelnetica.easyscan.ui.pagescreen
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.BottomAppBar
@@ -40,8 +41,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pixelnetica.camera.CameraContract
-import com.pixelnetica.composability.painterDrawables
-import com.pixelnetica.composability.rememberDrawable
+import com.pixelnetica.composable.painterDrawables
+import com.pixelnetica.composable.rememberDrawable
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.ui.viewitem.PageViewProfile
@@ -111,7 +112,7 @@ fun PageSliderScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
                         )
                     }
@@ -290,15 +291,17 @@ fun PageSliderScreen(
             }
         }
     ) { contentPadding ->
+
         HorizontalPager(
             state = pagerState,
             contentPadding = contentPadding,
             key = { index ->
                 pages[index].asKey()
-            }
+            },
         ) { index ->
             PageView(
                 modifier = Modifier.fillMaxSize(),
+                pagerOrientation = Orientation.Horizontal,
                 pages[index],
             )
         }
@@ -374,31 +377,6 @@ fun ProfileMenu(
 
         // Line
         HorizontalDivider()
-
-        // Original profile
-        DropdownMenuItem(
-            text = {
-                Text(text = stringResource(id = R.string.page_color_original))
-            },
-            onClick = {
-                currentPage?.setProfile(profile = PageViewProfile.Type.Original)
-                showMenu = false
-            },
-            leadingIcon = {
-                Icon(
-                    painterResource(id = R.drawable.ic_profile_original),
-                    contentDescription = null,
-                )
-            },
-            trailingIcon = {
-                if (profile == PageViewProfile.Type.Original) {
-                    Icon(
-                        imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = null,
-                    )
-                }
-            },
-        )
 
         // BW profile
         DropdownMenuItem(
@@ -477,6 +455,31 @@ fun ProfileMenu(
                 if (profile == PageViewProfile.Type.Colored) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+        
+        // Original profile
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.page_color_original))
+            },
+            onClick = {
+                currentPage?.setProfile(profile = PageViewProfile.Type.Original)
+                showMenu = false
+            },
+            leadingIcon = {
+                Icon(
+                    painterResource(id = R.drawable.ic_profile_original),
+                    contentDescription = null,
+                )
+            },
+            trailingIcon = {
+                if (profile == PageViewProfile.Type.Original) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
                         contentDescription = null,
                     )
                 }

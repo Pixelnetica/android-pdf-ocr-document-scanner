@@ -1,10 +1,11 @@
 package com.pixelnetica.easyscan.ui.cropscreen
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -13,7 +14,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,13 +23,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.pixelnetica.design.crop.CropPicture
+import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.support.WaitingOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropScreen(
     navController: NavController,
+    route: String,
     viewModel: CropScreenViewModel = hiltViewModel()
     ) {
 
@@ -39,14 +43,17 @@ fun CropScreen(
     }
 
     // Query the viewmodel
-    val canExpand by viewModel.canExpandCutout.collectAsStateWithLifecycle(false)
-    val canRevert by viewModel.canRevertCutout.collectAsStateWithLifecycle(false)
+    val canExpand by viewModel.canExpandCutout.collectAsStateWithLifecycle()
+    val canRevert by viewModel.canRevertCutout.collectAsStateWithLifecycle()
 
-    // Save a modified cutout on an exit
-    DisposableEffect(viewModel) {
-        onDispose {
-            viewModel.acceptCutout()
-        }
+    // Save a modified cutout on exit
+
+    // There is not good way to handle navigation back
+    // We need to lookup current navigation route.
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route
+    if (currentRoute != null && currentRoute != route) {
+        viewModel.acceptChanges()
     }
 
     Scaffold(
@@ -56,9 +63,11 @@ fun CropScreen(
                     Text(text = stringResource(id = R.string.title_activity_crop))
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
                         )
                     }
@@ -127,18 +136,30 @@ fun CropScreen(
         }
     )
     { contentPadding ->
-        val image by viewModel.imagePicture.collectAsStateWithLifecycle(null)
-        val orientation by viewModel.imageOrientation.collectAsStateWithLifecycle(null)
-        val cutout by viewModel.imageCutout.collectAsStateWithLifecycle()
-        CropPicture(
+        Box(
             modifier = Modifier
-                .padding(contentPadding)
-                .fillMaxSize(),
-            picture = image,
-            orientation = orientation,
-            cutout = cutout,
-            onPictureReady = setPictureReady,
-            onCutoutChanged = viewModel::changeCutout
-        )
+                .fillMaxSize()
+                .padding(contentPadding)) {
+
+            val image by viewModel.imagePicture.collectAsStateWithLifecycle()
+            val orientation by viewModel.imageOrientation.collectAsStateWithLifecycle()
+            val cutout by viewModel.imageCutout.collectAsStateWithLifecycle()
+            CropPicture(
+                modifier = Modifier
+                    .fillMaxSize(),
+                picture = image,
+                orientation = orientation,
+                cutout = cutout,
+                onPictureReady = setPictureReady,
+                onCutoutChanged = viewModel::changeCutout,
+            )
+
+            if (!isPictureReady) {
+                WaitingOverlay(stringResource(R.string.loading))
+            }
+        }
     }
 }
+
+@Suppress("unused")
+private object CropScreenLogger : AppTagger("CropScreen")

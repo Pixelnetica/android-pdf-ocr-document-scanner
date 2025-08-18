@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">로드 중…</string>
+    <string name="analyze">분석 중…</string>
+    <string name="recognize">인식</string>
+    <string name="read_empty_text">이 페이지에서 텍스트를 찾을 수 없습니다.</string>
+</resources>

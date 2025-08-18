@@ -26,7 +26,7 @@ import androidx.room.TypeConverters
         ShareItemState::class,
         PendingShares::class,
             ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         // "Pending" table and page status was added
@@ -35,6 +35,8 @@ import androidx.room.TypeConverters
         AutoMigration(from = 2, to = 3),
         // "detectOrientation" field was added
         AutoMigration(from = 3, to = 4),
+        // "statusCount" field was added.
+        AutoMigration(from = 4, to = 5),
             ],
     )
 @TypeConverters(EasyScanConverters::class)

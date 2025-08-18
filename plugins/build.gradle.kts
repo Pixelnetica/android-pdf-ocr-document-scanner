@@ -30,7 +30,7 @@ gradlePlugin {
     // Add fake plugin, if you don't have any
     plugins.register("class-loader-plugin") {
         id = "class-loader-plugin"
-        implementationClass = "ClassLoaderPlugin"
+        implementationClass = "com.pixelnetica.classloader.ClassLoaderPlugin"
     }
     // Or provide your implemented plugins
 }

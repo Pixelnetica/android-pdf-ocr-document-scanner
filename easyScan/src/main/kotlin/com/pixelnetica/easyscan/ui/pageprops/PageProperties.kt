@@ -31,7 +31,7 @@ import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.data.Page
 import com.pixelnetica.easyscan.ui.main.NavDialog
-import com.pixelnetica.support.Spinner
+import com.pixelnetica.composable.Spinner
 import com.pixelnetica.support.Tag
 
 @Composable
@@ -48,12 +48,12 @@ fun PageProperties(
     val previewModifier = Modifier
         .align(Alignment.CenterHorizontally)
     if (previewImage != null) {
-        com.pixelnetica.composability.PreviewBox(
+        com.pixelnetica.composable.PreviewBox(
             bitmap = previewImage,
             modifier = previewModifier,
         )
     } else {
-        com.pixelnetica.composability.PreviewBox(
+        com.pixelnetica.composable.PreviewBox(
             painter = painterResource(id = R.drawable.document_photo_icon),
             modifier = previewModifier,
         )

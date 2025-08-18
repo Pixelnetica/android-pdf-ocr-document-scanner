@@ -47,6 +47,9 @@
     <string name="btn_read_languages">Sprachen</string>
     <string name="fab_desc">Dokument mit Kamera scannen</string>
     <string name="loading">Wird geladen…</string>
+    <string name="analyze">Wird analysiert …</string>
+    <string name="recognize">Erkennung</string>
+    <string name="read_empty_text">Auf dieser Seite kann kein Text gefunden werden.</string>
     <string name="settings_pdf_image_compression">Komprimierungsstufe für PDF-Bilder</string>
     <string name="settings_pdf_image_compression_lossless">Verlustfrei</string>
     <string name="settings_pdf_image_compression_low">Niedrig</string>

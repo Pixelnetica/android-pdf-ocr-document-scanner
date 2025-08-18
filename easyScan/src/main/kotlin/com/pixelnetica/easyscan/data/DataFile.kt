@@ -19,8 +19,6 @@ data class DataFile(
      */
     val path: String
 ) {
-    constructor(): this(Id.Initial, "")
-
     @Parcelize
     data class Id(
         @ColumnInfo(name = "Id")
@@ -32,4 +30,8 @@ data class DataFile(
     }
 
     fun buildFile(root: File) = File(root, path)
+
+    companion object {
+        val Empty = DataFile(Id.Initial, "")
+    }
 }

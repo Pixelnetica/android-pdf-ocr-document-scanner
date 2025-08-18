@@ -7,6 +7,7 @@ import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.scanning.RefineFeature
 import com.pixelnetica.scanning.ScanCutout
 import com.pixelnetica.scanning.ScanOrientation
+import com.pixelnetica.scanning.ScanPicture
 import com.pixelnetica.scanning.ScanText
 import com.pixelnetica.support.Tag
 import kotlinx.coroutines.flow.Flow
@@ -91,7 +92,13 @@ data class PageInput(
         entityColumn = "inputId",
     )
     val input: Input,
-)
+
+    @Ignore
+    val picture: ScanPicture?,
+) {
+    // Room constructor
+    constructor(page: Page, input: Input) : this(page, input, null)
+}
 
 data class PageOriginal(
     @Embedded
@@ -116,7 +123,13 @@ data class PagePending(
         entityColumn = "pendingId",
     )
     val pending: Pending?,  // nullable for compatibility with previous database
-)
+
+    @Ignore
+    val picture: ScanPicture?,
+) {
+    constructor(page: Page, original: Original, pending: Pending?) :
+            this(page, original, pending, null)
+}
 
 data class PageComplete(
     @Embedded
@@ -126,7 +139,15 @@ data class PageComplete(
         entityColumn = "completeId",
     )
     val complete: Complete,
-)
+
+    @Ignore
+    val picture: ScanPicture? = null,
+) {
+    constructor(page: Page, complete: Complete):
+            this(page, complete, null)
+
+}
+
 data class RepresentationChecked(
     val representationId: Page.Id,
     val representative: String,
@@ -139,7 +160,6 @@ data class PageOrder(
     val orderIndex: Int,
 ) {
     constructor(pageId: Page.Id, orderIndex: Int): this(PageId(pageId), orderIndex)
-    constructor(page: Page, orderIndex: Int): this(PageId(page), orderIndex)
     val pageId get () = id.id
 }
 
@@ -190,9 +210,10 @@ data class PageCutout(
     val id: PageId,
     val resetCutout: Page.ResetCutout,
     val cutout: ScanCutout?,
+    val orientation: ScanOrientation,
 ) {
-    constructor(pageId: Page.Id, resetCutout: Page.ResetCutout, cutout: ScanCutout?):
-            this(PageId(pageId), resetCutout, cutout)
+    constructor(pageId: Page.Id, cutout: ScanCutout?, orientation: ScanOrientation):
+            this(PageId(pageId), Page.ResetCutout.Setup, cutout, orientation)
 }
 
 data class PagePaper(
@@ -253,7 +274,21 @@ data class PageState(
     val output: Output?,
     @Embedded
     val recognition: Recognition?,
-)
+    @Ignore
+    val picture: ScanPicture?,
+) {
+    // Room constructor
+    constructor(
+        page: Page,
+        input: Input?,
+        original: Original?,
+        pending: Pending?,
+        complete: Complete?,
+        output: Output?,
+        recognition: Recognition?) :
+            this(page, input, original, pending, complete, output, recognition, null)
+}
+
 
 /**
  * Page State plus optional Representative
@@ -292,7 +327,7 @@ sealed class RecognizedText(
         constructor(id: Page.Id, text: ScanText): this(id, text, text)
     }
 
-    object Undefined: RecognizedText(Page.Id.Undefined)
+    data object Undefined: RecognizedText(Page.Id.Undefined)
 }
 
 class PageRecognitionTask(
@@ -316,9 +351,7 @@ data class ImageSource(
 data class ShareSessionId(
     @Embedded(prefix = "shareSession")
     val id: ShareSession.Id
-) {
-    constructor(session: ShareSession): this(session.id)
-}
+)
 
 @DatabaseView(
     """
@@ -346,7 +379,13 @@ data class ShareItemState(
 
     @Embedded
     val text: Text?,
-)
+
+    @Ignore
+    val picture: ScanPicture?
+) {
+    constructor(item: ShareItem, page: Page, complete: Complete, output: Output, text: Text?) :
+            this(item, page, complete, output, text, null)
+}
 
 @DatabaseView(
     """
@@ -376,6 +415,7 @@ data class ShareSessionItems(
     )
     val items: List<ShareItemState>
 )
+
 @Dao
 interface EasyScanDao {
 
@@ -389,7 +429,7 @@ interface EasyScanDao {
     @Transaction
     suspend fun createDataFile(block: suspend (fileId: DataFile.Id) -> DataFile): DataFile {
         // Insert empty entry
-        val fileId = DataFile.Id(insertDataFile(DataFile()))
+        val fileId = DataFile.Id(insertDataFile(DataFile.Empty))
         val dataFile = block(fileId).copy(id = fileId)
         updateDataFile(dataFile)
         return dataFile
@@ -416,12 +456,29 @@ interface EasyScanDao {
     )
     fun queryDataFiles(): Flow<List<DataFile>>
 
-
     @Insert
     suspend fun insertPage(page: Page): Long
 
-    @Update
-    suspend fun updatePage(page: Page)
+    @Query(
+        """
+            SELECT * FROM Page WHERE pageId == :pageId LIMIT 1
+        """
+    )
+    fun queryPage(pageId: Page.Id): Flow<Page?>
+
+    @Query(
+        """
+            SELECT * FROM Page WHERE pageId IN (:pageIds)
+        """
+    )
+    fun queryPages(pageIds: List<Page.Id>): Flow<List<Page>>
+
+    @Query(
+        """
+            SELECT * FROM Page WHERE status == :status LIMIT 1
+        """
+    )
+    fun queryPagesWithStatus(status: Page.Status): Flow<List<Page>>
 
     @Update(entity = Page::class)
     suspend fun updatePageStatus(pageStatus: PageStatus)
@@ -453,24 +510,10 @@ interface EasyScanDao {
 
     @Query(
         """
-            SELECT COUNT(pageId) FROM Page
-        """
-    )
-    fun queryPageCount(): Flow<Int>
-
-    @Query(
-        """
             SELECT pageId FROM Page ORDER BY orderIndex
         """
     )
     fun queryPageIds(): Flow<List<Page.Id>>
-
-    @Query(
-        """
-            SELECT pageId, status FROM Page WHERE pageId = :pageId LIMIT 1
-        """
-    )
-    fun queryPageStatus(pageId: Page.Id): Flow<PageStatus?>
 
     @Query(
         """
@@ -488,15 +531,71 @@ interface EasyScanDao {
             LIMIT 1
         """
     )
+    suspend fun getPageState(pageId: Page.Id): PageState?
 
-    fun queryPageState(pageId: Page.Id): Flow<PageState?>
-    @Query(
-        """
-            SELECT * FROM PageState
-            WHERE pageId in (:pageIds)
-        """
-    )
-    fun queryPageStates(pageIds: List<Page.Id>): Flow<List<PageState>>
+    @Transaction
+    suspend fun getPagePictureState(
+        pageId: Page.Id,
+        preview: Boolean,
+        requiredStatus: Page.Status? = null,
+        loader: suspend (DataFile) -> ScanPicture,
+        )
+    : PageState? =
+        getPageState(pageId)?.let { pageState: PageState ->
+            with(pageState) {
+                when (requiredStatus ?: page.status) {
+                    Page.Status.Invalid, Page.Status.Initial ->
+                        null
+
+                    Page.Status.Input ->
+                        if (preview)
+                            input?.inputPreviewFileId
+                        else
+                            input?.inputImageFileId
+
+                    Page.Status.Original ->
+                        if (preview)
+                            original?.originalPreviewFileId
+                        else
+                            original?.originalImageFileId
+
+                    Page.Status.Pending ->
+                        if (preview)
+                            pending?.pendingPreviewFileId
+                        else
+                            pending?.pendingImageFileId
+
+                    Page.Status.Complete ->
+                        if (preview)
+                            complete?.completePreviewFileId
+                        else
+                            complete?.completeImageFileId
+
+                    Page.Status.Output ->
+                        // Return complete images for the output by default.
+                        if (requiredStatus == null) {
+                            if (preview)
+                                complete?.completePreviewFileId
+                            else
+                                complete?.completeImageFileId
+                        } else {
+                            output?.outputFileId
+                        }
+
+                }?.let { id: DataFile.Id ->
+                    checkNotNull(getDataFile(id)) {
+                        val previewMsg =
+                            if (preview)
+                                "preview"
+                            else
+                                "picture"
+                        "Data file is missing for $previewMsg of page ${page.id} with status ${page.status.name}"
+                    }
+                }?.let { dataFile: DataFile ->
+                    pageState.copy(picture = loader(dataFile))
+                } ?: pageState
+            }
+        }
 
     @Query(
         """
@@ -547,10 +646,10 @@ interface EasyScanDao {
 
     @Query(
         """
-        SELECT * from Page WHERE pageId=:pageId
+        SELECT * from Page WHERE pageId=:pageId AND status IN (:requiredStatus)
         """
     )
-    suspend fun getPage(pageId: Page.Id): Page?
+    suspend fun getPage(pageId: Page.Id, requiredStatus: Set<Page.Status>): Page?
 
     @Query(
         """
@@ -567,8 +666,8 @@ interface EasyScanDao {
     suspend fun getPageOrders(): List<PageOrder>
 
     @Transaction
-    suspend fun withPages(pageIds: Set<Page.Id>, block: suspend EasyScanDao.(Page) -> Unit) {
-        pageIds.mapNotNull { getPage(it) }.forEach {
+    suspend fun withPages(pageIds: Set<Page.Id>, requiredStatus: Page.Status, block: suspend EasyScanDao.(Page) -> Unit) {
+        pageIds.mapNotNull { getPage(it, requiredStatus.required()) }.forEach {
             this@EasyScanDao.block(it)
         }
     }
@@ -736,7 +835,7 @@ interface EasyScanDao {
      */
     @Query(
         """
-            UPDATE Page SET status = :requiredStatus
+            UPDATE Page SET status = :requiredStatus, statusCount=statusCount+1
             WHERE pageId = :pageId AND status IN (:expectedStatus)
         """
     )
@@ -757,19 +856,12 @@ interface EasyScanDao {
         ensurePageStatus(pageId, Page.Status.Pending)
     }
 
-    @Query(
-        """
-            SELECT inputCutout FROM Input WHERE inputId = :pageId
-        """
-    )
-    suspend fun getInputCutout(pageId: Page.Id): ScanCutout?
-
     @Update(entity = Page::class)
     suspend fun updatePageCutout(pageCutout: PageCutout)
 
     @Transaction
-    suspend fun setPageCutout(pageId: Page.Id, cutout: ScanCutout) {
-        updatePageCutout(PageCutout(pageId, Page.ResetCutout.Setup, cutout))
+    suspend fun setPageCutout(pageId: Page.Id, cutout: ScanCutout, orientation: ScanOrientation) {
+        updatePageCutout(PageCutout(pageId, cutout, orientation))
         ensurePageStatus(pageId, Page.Status.Input)
     }
 
@@ -855,7 +947,7 @@ interface EasyScanDao {
     fun queryOriginalImage(pageId: Page.Id, availableStatus: Set<Page.Status>): Flow<ImageSource?>
 
     fun queryOriginalImage(pageId: Page.Id) =
-        queryOriginalImage(pageId, Page.Status.Original.available())
+        queryOriginalImage(pageId, Page.Status.Original.required())
 
     @Query(
         """
@@ -925,6 +1017,7 @@ interface EasyScanDao {
         """
     )
     suspend fun getRecognitionStatus(pageId: Page.Id): Int?
+
     @Transaction
     suspend fun ensureRecognition(pageId: Page.Id, hasText: Boolean) {
         val status = getRecognitionStatus(pageId)
@@ -967,12 +1060,6 @@ interface EasyScanDao {
 
     suspend fun deleteShareSession(sessionId: ShareSession.Id) =
         deleteShareSession(ShareSessionId(sessionId))
-
-    @Query("""
-        SELECT shareSessionId FROM ShareSession
-    """)
-    @Transaction
-    fun queryShareSessionIds(): Flow<List<ShareSession.Id>>
 
     @Query(
         """
@@ -1036,15 +1123,6 @@ interface EasyScanDao {
     )
     fun queryHasShareSessions(): Flow<Int?>
 
-/*
-    @Query(
-        """
-            SELECT * FROM PendingShares
-        """
-    )
-    fun queryPendingShares(): Flow<List<PendingShares>>
-*/
-
     @Query(
         """
             SELECT paperSizeId FROM Page WHERE pageId = :pageId
@@ -1077,7 +1155,7 @@ interface EasyScanDao {
      * Build a set of page status great OR equal than this.
      * Used to check page status
      */
-    private fun Page.Status.available(): Set<Page.Status> =
+    private fun Page.Status.required(): Set<Page.Status> =
         Page.Status.entries.filter {
             it.ordinal >= this.ordinal
         }.toSet()

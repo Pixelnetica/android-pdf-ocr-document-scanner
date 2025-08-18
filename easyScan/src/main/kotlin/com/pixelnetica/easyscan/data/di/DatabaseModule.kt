@@ -25,7 +25,7 @@ class DatabaseModule {
                 appContext,
                 EasyScanDatabase::class.java,
                 "easyscan.db",
-                    )
-            .fallbackToDestructiveMigrationOnDowngrade()
+            )
+            .fallbackToDestructiveMigrationOnDowngrade(true)
             .build()
 }

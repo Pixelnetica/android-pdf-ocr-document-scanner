@@ -50,11 +50,11 @@ fun ShareDialog(
         ) { index ->
             val previewImage = previews.getOrNull(index)?.asImageBitmap()
             if (previewImage != null) {
-                com.pixelnetica.composability.PreviewBox(
+                com.pixelnetica.composable.PreviewBox(
                     bitmap = previewImage,
                 )
             } else {
-                com.pixelnetica.composability.PreviewBox(
+                com.pixelnetica.composable.PreviewBox(
                     painter = painterResource(id = R.drawable.document_photo_icon),
                 )
             }

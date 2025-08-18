@@ -5,6 +5,9 @@
     <string name="action_settings" tools:ignore="MissingTranslation">Settings</string>
     <string name="fab_desc" tools:ignore="MissingTranslation">Scan document with camera</string>
     <string name="loading" tools:ignore="MissingTranslation">Loading…</string>
+    <string name="analyze">Analyzing…</string>
+    <string name="recognize">Recognizing…</string>
+    <string name="read_empty_text">Can\'t find any text on this page.</string>
 
     <string name="page_list_page_invalid_title" tools:ignore="MissingTranslation">Page processing failed</string>
     <string name="page_list_page_initial_title" translatable="false">@string/loading</string>
@@ -96,7 +99,7 @@
     <string name="settings_pdf_image_compression_medium" tools:ignore="MissingTranslation">Medium</string>
     <string name="settings_pdf_image_compression_high" tools:ignore="MissingTranslation">High</string>
     <string name="settings_pdf_image_compression_extreme" tools:ignore="MissingTranslation">Extreme</string>
-    <string name="about_message" tools:ignore="MissingTranslation" translatable="false">%1$s&lt;br&gt;Version %2$s (%3$s)&lt;br&gt;More on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html?utm_source=EasyScan&amp;utm_medium=app-android&amp;utm_campaign=scr-about&amp;utm_content=dssdk-overview&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
+    <string name="about_message" tools:ignore="MissingTranslation" translatable="false">%1$s&lt;br&gt;Version %2$s&lt;br&gt;More on &lt;a href=&quot;https://www.pixelnetica.com/products/document-scanning-sdk/document-scanner-sdk.html?utm_source=EasyScan&amp;utm_medium=app-android&amp;utm_campaign=scr-about&amp;utm_content=dssdk-overview&quot;&gt;Pixelnetica DSSDK&lt;/a&gt;</string>
 
     <string name="licence_dialog_title" tools:ignore="MissingTranslation">Check Licence</string>
     <string name="licence_dialog_validate_png" tools:ignore="MissingTranslation" translatable="false">PNG</string>

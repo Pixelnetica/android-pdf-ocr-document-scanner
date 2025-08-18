@@ -51,6 +51,7 @@ fun MainNavigation() {
         ) {
             CropScreen(
                 navController = navController,
+                route = "pageCutout/{cropPageId}"
             )
         }
         composable(

@@ -1,3 +1,5 @@
+package com.pixelnetica.classloader
+
 import java.util.Locale
 
 fun String.capitalize(): String = replaceFirstChar {

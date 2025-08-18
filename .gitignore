@@ -79,9 +79,8 @@ fastlane/screenshots
 fastlane/test_output
 fastlane/readme.md
 
-# License key file
-# **/license.key
-# license.key
-
 keystore.properties
 easyscan.jks
+
+# Kotlin compiler
+.kotlin/

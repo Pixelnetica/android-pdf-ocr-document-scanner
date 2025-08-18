@@ -1,8 +1,10 @@
 import com.google.protobuf.gradle.*
 import com.pixelnetica.classloader.embeddedScanningSdk
+import com.pixelnetica.classloader.projectBuildTools
 import com.pixelnetica.classloader.projectCompileSdk
 import com.pixelnetica.classloader.projectJavaVersion
 import com.pixelnetica.classloader.projectMinSdk
+import com.pixelnetica.classloader.projectNdk
 import com.pixelnetica.classloader.projectTargetSdk
 
 @Suppress("DSL_SCOPE_VIOLATION") // Remove when fixed https://youtrack.jetbrains.com/issue/KTIJ-19369
@@ -19,29 +21,30 @@ plugins {
 
 android {
     namespace = "com.pixelnetica.easyscan"
+
     compileSdk = projectCompileSdk
+    buildToolsVersion = projectBuildTools
+    ndkVersion = projectNdk
 
     defaultConfig {
         applicationId = "com.pixelnetica.easyscan"
         minSdk = projectMinSdk
         targetSdk = projectTargetSdk
-        versionCode = 81
+        versionCode = 90
         versionName = "3.0.$versionCode"
 
         ndk.debugSymbolLevel = "FULL"
-
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-            arg("room.incremental", "true")
-            arg("room.expandProjection", "true")
-        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
 
-        buildConfigField("String", "GIT_HASH", "\"${getLastCommitHash()}\"")
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        arg("room.incremental", "true")
+        arg("room.expandProjection", "true")
     }
 
     buildFeatures {
@@ -90,7 +93,7 @@ android {
 
     buildTypes {
         debug {
-            kotlinOptions.freeCompilerArgs += "-Xdebug"
+            kotlin.target.compilerOptions.freeCompilerArgs.add("-Xdebug")
             manifestPlaceholders += mapOf("enableCrashReporting" to "false")
         }
         release {
@@ -101,14 +104,15 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debug")
+
+            ndk.debugSymbolLevel = "FULL"
+
             packaging {
                 // disable coroutines debug
                 resources.excludes.add("DebugProbesKt.bin")
             }
         }
     }
-    buildToolsVersion = "35.0.0"
-    ndkVersion = "28.0.12433566 rc1"
 
     if (embeddedScanningSdk) {
         flavorDimensions.add("stage")
@@ -165,8 +169,6 @@ dependencies {
     }
 
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons)
     implementation(libs.androidx.compose.material3)
@@ -176,7 +178,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore)
-    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

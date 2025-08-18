@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">読み込み中…</string>
+    <string name="analyze">分析中…</string>
+    <string name="recognize">認識</string>
+    <string name="read_empty_text">このページにはテキストが見つかりません。</string>
+</resources>

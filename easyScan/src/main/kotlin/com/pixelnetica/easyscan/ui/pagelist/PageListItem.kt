@@ -47,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pixelnetica.camera.BuildConfig
-import com.pixelnetica.composability.PreviewBox
+import com.pixelnetica.composable.PreviewBox
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.ui.viewitem.InitialViewItem
 import com.pixelnetica.easyscan.ui.viewitem.InputViewItem
@@ -57,8 +57,8 @@ import com.pixelnetica.easyscan.ui.viewitem.OutputViewItem
 import com.pixelnetica.easyscan.ui.viewitem.PageViewItem
 import com.pixelnetica.easyscan.ui.viewitem.PreviewViewItem
 import com.pixelnetica.easyscan.ui.viewitem.ProcessedViewItem
-import com.pixelnetica.composability.dragContainerForDragHandle
-import com.pixelnetica.composability.visibility
+import com.pixelnetica.composable.dragContainerForDragHandle
+import com.pixelnetica.composable.visibility
 import com.pixelnetica.easyscan.ui.viewitem.PendingViewItem
 
 
@@ -68,7 +68,7 @@ fun PageListItem(
     navController: NavController,
     viewModel: PageListViewModel,
     viewItem: PageViewItem,
-    dragDropState: com.pixelnetica.composability.DragDropState,
+    dragDropState: com.pixelnetica.composable.DragDropState,
     hasChecked: Boolean,
     isDragging: Boolean,
 ) {

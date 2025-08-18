@@ -2,15 +2,18 @@ package com.pixelnetica.easyscan.ui.textscreen
 
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -29,20 +32,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pixelnetica.design.read.ConfirmRestoreScope
+import com.pixelnetica.design.read.RecognizedStatus
 import com.pixelnetica.design.read.RecognizedText
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.scanning.ScanReader
 import com.pixelnetica.scanning.ScanText
 import com.pixelnetica.support.Tag
+import com.pixelnetica.support.WaitingOverlay
 
 private fun ScanText?.display() =
     this?.toString()?.lines()?.firstOrNull() ?: "<EMPTY>"
@@ -72,7 +79,7 @@ fun TextScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                         )
                     }
@@ -127,7 +134,6 @@ fun TextScreen(
 
         // Show a confirmation when the language set was changed
         val inconsistentLanguages by viewModel.inconsistentLanguages.collectAsStateWithLifecycle(null)
-        Logger.log.d("Inconsistent languages: $inconsistentLanguages")
         val differentLanguages = inconsistentLanguages
         if (differentLanguages != null) {
             var differentLanguagesHandled by remember(differentLanguages) {
@@ -190,36 +196,54 @@ fun TextScreen(
         }
 
 
-        // Query viemodel
+        // Query viewmodel
         val picture by viewModel.imagePicture.collectAsStateWithLifecycle(null)
         val lookupRect by viewModel.lookupRect.collectAsStateWithLifecycle(null)
-        val lookupProcess by viewModel.lookupProgress.collectAsStateWithLifecycle(-1)
+        val lookupProgress by viewModel.lookupProgress.collectAsStateWithLifecycle(-1)
         val originalText by viewModel.originalText.collectAsStateWithLifecycle(ScanText())
         val modifiedText by viewModel.modifiedText.collectAsStateWithLifecycle(ScanText())
 
         // Main view
-        RecognizedText(
+        Box(
             modifier = Modifier
                 .padding(contentPadding)
-                .fillMaxSize(),
-            picture = picture,
-            lookupRect = lookupRect,
-            lookupProgress = lookupProcess,
-            originalText = originalText,
-            modifiedText = modifiedText,
-            onCancel = {
-                viewModel.cancel()
-            },
-            onConfirmRestore = { items ->
-                confirmation = Pair(this, items)
-            },
-            onPictureReady = {
+                .fillMaxSize()
+        ) {
+            val (progressStatus, setProgressStatus) = remember {
+                mutableStateOf<RecognizedStatus>(RecognizedStatus.None)
+            }
 
-            },
-            onModifiedTextChanged = {
-                viewModel.onModifiedTextChanged(it)
-            },
-        )
+            RecognizedText(
+                modifier = Modifier
+                    .fillMaxSize(),
+                picture = picture,
+                lookupRect = lookupRect?.toComposeRect(),
+                lookupProgress = lookupProgress,
+                originalText = originalText,
+                modifiedText = modifiedText,
+                onCancel = {
+                    viewModel.cancel()
+                },
+                onConfirmRestore = { items ->
+                    confirmation = Pair(this, items)
+                },
+                onModifiedTextChanged = viewModel::onModifiedTextChanged,
+                onProgress = setProgressStatus,
+            ) { modifier ->
+                Text(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .then(modifier),
+                    text = stringResource(R.string.read_empty_text),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+
+            // Show Progress overlay
+            WaitingOverlay(progressStatus)
+        }
 
         // Show or hide keyboard when recognize done
         val localView = LocalView.current

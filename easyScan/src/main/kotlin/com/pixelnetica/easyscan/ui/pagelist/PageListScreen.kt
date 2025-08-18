@@ -28,16 +28,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pixelnetica.camera.CameraContract
-import com.pixelnetica.composability.DraggableItem
-import com.pixelnetica.composability.drawableResource
-import com.pixelnetica.composability.isDragging
-import com.pixelnetica.composability.isScrolledToEnd
-import com.pixelnetica.composability.rememberDragDropState
+import com.pixelnetica.composable.DraggableItem
+import com.pixelnetica.composable.drawableResource
+import com.pixelnetica.composable.isDragging
+import com.pixelnetica.composable.isScrolledToEnd
+import com.pixelnetica.composable.rememberDragDropState
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.ui.viewitem.*
 import com.pixelnetica.support.ImagePicker
 import com.pixelnetica.support.Tag
+import com.pixelnetica.support.scrollbar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,14 +206,12 @@ fun PageListScreen(
     ) { contentPadding ->
         Box(modifier = Modifier.padding(contentPadding)) {
             PageListContent(navController, {
-                Logger.log.d("List is scroll to end $it")
                 isScrolledToEnd = it
             })
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PageListContent(
     navController: NavController,
@@ -261,7 +260,9 @@ fun PageListContent(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxHeight(),
+            .fillMaxHeight()
+            .scrollbar(listState, false)
+        ,
         state = listState,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),

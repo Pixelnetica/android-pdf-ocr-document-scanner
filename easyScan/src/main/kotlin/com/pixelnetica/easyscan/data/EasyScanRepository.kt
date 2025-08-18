@@ -33,16 +33,14 @@ import com.pixelnetica.support.Tag
 import com.pixelnetica.support.cache
 import com.pixelnetica.support.insert
 import com.pixelnetica.support.distinctList
-import com.pixelnetica.support.unplaitList
+import com.pixelnetica.support.untwistList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -83,11 +81,13 @@ interface EasyScanRepository {
 
     val pageIds: Flow<List<Page.Id>>
 
-    fun queryPageStatus(pageId: Page.Id): Flow<PageStatus>
+    fun queryPageViewports(representative: String, preview: Boolean): Flow<List<PageViewport>>
 
-    fun queryPageViewports(representative: String): Flow<List<PageViewport>>
-
-    fun queryPageState(pageId: Page.Id): Flow<PageState>
+    fun queryPagePictureState(
+        pageId: Page.Id,
+        preview: Boolean,
+        requiredStatus: Page.Status?,
+        ): Flow<PageState>
 
     fun insertPages(
         uriList: List<Uri>,
@@ -95,9 +95,6 @@ interface EasyScanRepository {
         insertAfter: Boolean = true,
         callback: suspend EasyScanRepository.(List<Page.Id>) -> Unit = { }
     )
-
-    fun loadPictureAsync(imageFileId: DataFile.Id): Deferred<ScanPicture>
-    fun loadBitmapAsync(imageFileId: DataFile.Id, orientation: ScanOrientation): Deferred<Bitmap>
 
     fun checkPage(pageId: Page.Id, checked: Boolean, representative: String)
 
@@ -109,8 +106,6 @@ interface EasyScanRepository {
 
     fun reorderPages(pages: List<Page.Id>)
 
-    fun getPagePictureAsync(pageState: PageState): Deferred<ScanPicture?>
-
     fun deletePages(vararg pageId: Page.Id)
 
     fun rotatePage(pageId: Page.Id, clockwise: Boolean)
@@ -121,9 +116,9 @@ interface EasyScanRepository {
 
     fun setPageProfile(pageId: Page.Id, profile: RefineFeature.Profile.Type)
 
-    fun getInputCutoutAsync(pageId: Page.Id, expand: Boolean = false): Deferred<ScanCutout?>
+    fun setPageOrientation (pageId: Page.Id, orientation: ScanOrientation)
 
-    fun setPageCutout(pageId: Page.Id, cutout: ScanCutout)
+    fun setPageCutout(pageId: Page.Id, cutout: ScanCutout, orientation: ScanOrientation)
 
     fun queryOriginalPicture(pageId: Page.Id): Flow<ScanPicture?>
 
@@ -162,6 +157,7 @@ interface EasyScanRepository {
     class PageBitmap(val pageId: Page.Id, val bitmap: Bitmap?)
     fun queryPagePreviews(pageIds: List<Page.Id>): Flow<List<PageBitmap>>
 }
+
 class DefaultEasyScanRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val easyScanDao: EasyScanDao,
@@ -170,7 +166,6 @@ class DefaultEasyScanRepository @Inject constructor(
 
     init {
         instances++
-        log.d("Repository instance $instances")
 
         check(instances == 1) {
             "Repository must me a singleton"
@@ -227,10 +222,10 @@ class DefaultEasyScanRepository @Inject constructor(
             }
         }.id
 
-    private suspend fun DataFile.loadPicture(): ScanPicture {
-        val picture = pictureCache.cache(this) {
+    private suspend fun loadPicture(dataFile: DataFile): ScanPicture {
+        val picture = pictureCache.cache(dataFile) {
             withContext(Dispatchers.IO) {
-                FileInputStream(buildFile(pagesDir)).use { stream ->
+                FileInputStream(dataFile.buildFile(pagesDir)).use { stream ->
                     ScanPicture.load(stream)
                 }
             }
@@ -240,6 +235,10 @@ class DefaultEasyScanRepository @Inject constructor(
         return ScanPicture(picture)
     }
 
+    private suspend fun getDataFile(fileId: DataFile.Id) =
+        checkNotNull(easyScanDao.getDataFile(fileId)) {
+            "Data file $fileId is missed."
+        }
 
     private fun Long.formatHex() = toString(16).padStart(8, '0')
     private suspend fun createPageFile(
@@ -309,7 +308,7 @@ class DefaultEasyScanRepository @Inject constructor(
                 }
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys) { page ->
+            easyScanDao.withPages(data.keys, Page.Status.Initial) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertInput(
@@ -346,8 +345,24 @@ class DefaultEasyScanRepository @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun lookupPageInputs() = easyScanDao
         .queryPageInputs()
-        .filter { it.isNotEmpty() }
+        .filter { list ->
+            list.isNotEmpty()
+        }
         .distinctUntilChanged()
+        .map { list ->
+            list.map { pageInput ->
+                val state = easyScanDao.getPagePictureState(
+                    pageInput.page.id,
+                    false,
+                    null,
+                    ::loadPicture
+                )
+
+                pageInput.copy(picture = state?.picture)
+            }.filter {
+                it.picture != null
+            }
+        }
         .mapLatest { items ->
             // Prepare ScanDetector for each set of images
             val languageManager = LanguageManager.getInstance(context = context)
@@ -355,8 +370,7 @@ class DefaultEasyScanRepository @Inject constructor(
                 ScanDetector(it)
             }
 
-
-            items.associate { (page, input) ->
+            items.associate { (page, input, inputPicture) ->
                 page.id to runCatching {
                     // Setup cutout
                     val (cutout, undefined) = when (page.resetCutout) {
@@ -374,9 +388,9 @@ class DefaultEasyScanRepository @Inject constructor(
                         }, false)
                     }
 
-                    val picture = checkNotNull(easyScanDao.getDataFile(input.inputImageFileId)) {
-                        "No data file for id ${input.inputImageFileId}"
-                    }.loadPicture()
+                    val picture = checkNotNull(inputPicture) {
+                        "Cannot load the input picture!"
+                    }
 
                     picture.rectify(cutout)
 
@@ -401,7 +415,7 @@ class DefaultEasyScanRepository @Inject constructor(
         .onEach { data ->
             // Simple setup cutout
             // There isn't any processing
-            easyScanDao.withPages(data.keys) { page ->
+            easyScanDao.withPages(data.keys, Page.Status.Input) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertOriginal(
@@ -435,11 +449,11 @@ class DefaultEasyScanRepository @Inject constructor(
 
     private fun lookupPageOriginals() = easyScanDao
         .queryPageOriginals()
+        .filter { it.isNotEmpty() }
         .distinctUntilChanged()
         .onEach { items ->
-            log.d("Process ${items.size} originals")
             items.associateBy { item -> item.page.id }.apply {
-                easyScanDao.withPages(keys) { page ->
+                easyScanDao.withPages(keys, Page.Status.Original) { page ->
                     runCatching {
                         with (getValue(page.id)) {
                             // Simple create Pending without any processing
@@ -467,18 +481,29 @@ class DefaultEasyScanRepository @Inject constructor(
     private fun lookupPendingPages() = easyScanDao
         .queryPendingPages()
         .filter { it.isNotEmpty() }
+        .map { list ->
+            list.map { pagePending ->
+                val state = easyScanDao.getPagePictureState(
+                    pagePending.page.id,
+                    false,
+                    // NOTE: Here we get original picture
+                    Page.Status.Original,
+                    ::loadPicture
+                )
+
+                pagePending.copy(picture = state?.picture)
+            }.filter {
+                it.picture != null
+            }
+        }
         .distinctUntilChanged()
         .mapLatest { items ->
-            log.d("Process ${items.size} pending pages")
-            items.associate { (page, original) ->
-                log.d("Associate id=${page.id.id}")
+            items.associate { (page, _, _, originalPicture) ->
                 page.id to runCatching {
-                    val picture =
-                        checkNotNull(easyScanDao.getDataFile(original.originalImageFileId)) {
-                            "No data file for id ${original.originalImageFileId}"
-                        }.loadPicture()
+                    val picture = checkNotNull(originalPicture) {
+                        "Cannot load the original picture"
+                    }
 
-                    log.d("Refine page id=${page.id.id} to ${page.profileType.name}")
                     picture.refine(
                         listOf(
                             RefineFeature.Shadows(page.strongShadows),
@@ -494,7 +519,7 @@ class DefaultEasyScanRepository @Inject constructor(
 
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys) { page ->
+            easyScanDao.withPages(data.keys, Page.Status.Pending) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         val completeImage = createPageFile(page, "complete").withdrawPictureFile(image)
@@ -537,14 +562,26 @@ class DefaultEasyScanRepository @Inject constructor(
         .queryPageCompletes()
         .filter { it.isNotEmpty() }
         .distinctUntilChanged()
+        .map { list ->
+            list.map { pageComplete: PageComplete ->
+                val state = easyScanDao.getPagePictureState(
+                    pageComplete.page.id,
+                    false,
+                    null,
+                    ::loadPicture
+                )
+
+                pageComplete.copy(picture = state?.picture)
+            }.filter {
+                it.picture != null
+            }
+        }
         .mapLatest { items ->
-            log.d("Process ${items.size} completes")
-            items.associate { (page, complete) ->
+            items.associate { (page, _, completePicture) ->
                 page.id to runCatching {
-                    val picture =
-                        checkNotNull(easyScanDao.getDataFile(complete.completeImageFileId)) {
-                            "No data file for id ${complete.completeImageFileId}"
-                        }.loadPicture()
+                    val picture = checkNotNull(completePicture) {
+                        "Cannot load the pending picture."
+                    }
 
                     val outputFile = PictureFile(picture, makeTmpImageFile {
                         ImageWriterPng(this).use { writer ->
@@ -559,7 +596,7 @@ class DefaultEasyScanRepository @Inject constructor(
                 }
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys) { page ->
+            easyScanDao.withPages(data.keys, Page.Status.Complete) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertOutput(
@@ -597,9 +634,23 @@ class DefaultEasyScanRepository @Inject constructor(
             // Don't cancel recognized task
             it.isNotEmpty()
         }
+        .map { list ->
+            list.map { pageComplete ->
+                val state = easyScanDao.getPagePictureState(
+                    pageComplete.page.id,
+                    false,
+                    Page.Status.Complete,
+                    ::loadPicture
+                )
+
+                pageComplete.copy(picture = state?.picture)
+            }.filter {
+                it.picture != null
+            }
+        }
         .mapLatest { completeList ->
             coroutineScope {
-                completeList.map { (page, complete) ->
+                completeList.map { (page, _, completePicture) ->
                     val pageId = page.id
                     when (page.recognitionTask.job) {
                         // Simple cancel recognition
@@ -626,11 +677,9 @@ class DefaultEasyScanRepository @Inject constructor(
                             if (languages.isEmpty()) {
                                 RecognizedText.Cancelled(pageId)
                             } else {
-                                val picture = checkNotNull(
-                                    easyScanDao.getDataFile(complete.completeImageFileId)
-                                ) {
-                                    "No data file for id ${complete.completeImageFileId}"
-                                }.loadPicture().withOrientation(page.orientation)
+                                val picture = checkNotNull(completePicture) {
+                                    "Cannot load the complete picture to recognize it!"
+                                }.withOrientation(page.orientation)
 
                                 // Clear recognition state
                                 easyScanDao.resetPageText(pageId)
@@ -675,7 +724,7 @@ class DefaultEasyScanRepository @Inject constructor(
     private fun lookupShareSessions() = easyScanDao
         .queryShareSessionItems()
         .distinctList()
-        .unplaitList()
+        .untwistList()
         .map { sessionItems ->
             val title = "easyScan-${
                 System.currentTimeMillis()
@@ -703,11 +752,7 @@ class DefaultEasyScanRepository @Inject constructor(
                             // Simple copy output file!
                             // No re-compression
                             val shareFile = makeShareFile("$title$pageSuffix.png")
-                            val outputFile = checkNotNull(
-                                easyScanDao.getDataFile(state.output.outputFileId)
-                            ) {
-                                "Missing output file for id=${state.output.outputFileId}"
-                            }.buildFile(pagesDir)
+                            val outputFile = getDataFile(state.output.outputFileId).buildFile(pagesDir)
 
                             outputFile.copyTo(shareFile, true)
 
@@ -817,7 +862,7 @@ class DefaultEasyScanRepository @Inject constructor(
                                     picture.scanText = text
 
                                     // Write the picture
-                                    writer.write(picture);
+                                    writer.write(picture)
                                 }
                             }
 
@@ -830,7 +875,7 @@ class DefaultEasyScanRepository @Inject constructor(
                             shareFile.bufferedWriter().use { writer ->
                                 sessionItems.items.forEach {state ->
                                     if (state.page.recognitionTask.isReady) {
-                                        val text = state.text?.modified?.toString().orEmpty()
+                                        val text = state.text?.modified?.text.orEmpty()
                                         if (text.isNotEmpty()) {
                                             writer.write(text)
 
@@ -880,13 +925,11 @@ class DefaultEasyScanRepository @Inject constructor(
                 when {
                     file.isFile ->
                         if (!usedFiles.contains(file)) {
-                            log.d("Delete file $file")
                             file.delete()
                         }
 
                     file.isDirectory ->
                         if (file.listFiles().isNullOrEmpty()) {
-                            log.d("Delete empty directory $file")
                             file.delete()
                         }
                 }
@@ -918,14 +961,37 @@ class DefaultEasyScanRepository @Inject constructor(
     override val pageIds: Flow<List<Page.Id>>
         get() = easyScanDao.queryPageIds().distinctUntilChanged()
 
-    override fun queryPageStatus(pageId: Page.Id): Flow<PageStatus> =
-        easyScanDao.queryPageStatus(pageId).filterNotNull().distinctUntilChanged()
+//    override fun queryPageStatus(pageId: Page.Id): Flow<PageStatus> =
+//        easyScanDao.queryPageStatus(pageId).filterNotNull().distinctUntilChanged()
 
-    override fun queryPageViewports(representative: String): Flow<List<PageViewport>> =
-        easyScanDao.queryPageViewports(representative).distinctUntilChanged()
+    override fun queryPageViewports(representative: String, preview: Boolean): Flow<List<PageViewport>> =
+        easyScanDao
+            .queryPageViewports(representative)
+            .distinctUntilChanged()
+            .map { list ->
+                list.mapNotNull { (pageState, representation) ->
+                    easyScanDao.getPagePictureState(
+                        pageState.page.id,
+                        preview,
+                        null,
+                        ::loadPicture)?.let { actualState ->
+                        PageViewport(actualState, representation)
+                    }
+                }
+            }
 
-    override fun queryPageState(pageId: Page.Id): Flow<PageState> =
-        easyScanDao.queryPageState(pageId).filterNotNull().distinctUntilChanged()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun queryPagePictureState(
+        pageId: Page.Id,
+        preview: Boolean,
+        requiredStatus: Page.Status?
+    ): Flow<PageState> = easyScanDao
+        .queryPage(pageId)
+        .distinctUntilChanged()
+        .mapLatest {
+            easyScanDao.getPagePictureState(pageId, preview, requiredStatus, ::loadPicture)
+        }
+        .filterNotNull()
 
     override fun insertPages(
         uriList: List<Uri>,
@@ -982,17 +1048,9 @@ class DefaultEasyScanRepository @Inject constructor(
     }
 
     private suspend fun loadPicture(imageFileId: DataFile.Id) =
-        checkNotNull(easyScanDao.getDataFile(imageFileId)) {
+        loadPicture(checkNotNull(easyScanDao.getDataFile(imageFileId)) {
             "Cannot get data file for id $imageFileId"
-        }.loadPicture()
-
-    override fun loadPictureAsync(imageFileId: DataFile.Id): Deferred<ScanPicture> = async {
-        loadPicture(imageFileId)
-    }
-
-    override fun loadBitmapAsync(imageFileId: DataFile.Id, orientation: ScanOrientation) = async {
-        loadPicture(imageFileId).createBitmap(ScanPicture.DISPLAY_BITMAP, orientation)
-    }
+        })
 
     override fun checkPage(pageId: Page.Id, checked: Boolean, representative: String) {
         launch {
@@ -1024,24 +1082,6 @@ class DefaultEasyScanRepository @Inject constructor(
         }
     }
 
-    override fun getPagePictureAsync(pageState: PageState): Deferred<ScanPicture?> = async {
-        with(pageState) {
-            when (page.status) {
-                Page.Status.Invalid, Page.Status.Initial -> null
-                Page.Status.Input -> input?.inputImageFileId
-                Page.Status.Original -> original?.originalImageFileId
-                Page.Status.Pending -> pending?.pendingImageFileId
-                Page.Status.Complete -> complete?.completeImageFileId
-                // NOTE: Using image from Complete
-                Page.Status.Output -> complete?.completeImageFileId
-            }?.let { dataFileId: DataFile.Id ->
-                easyScanDao.getDataFile(dataFileId)
-            }?.let { dataFile: DataFile ->
-                dataFile.loadPicture()
-            }
-        }
-    }
-
     override fun deletePages(vararg pageId: Page.Id) {
         launch {
             easyScanDao.deletePages(*pageId)
@@ -1050,7 +1090,7 @@ class DefaultEasyScanRepository @Inject constructor(
 
     override fun rotatePage(pageId: Page.Id, clockwise: Boolean) {
         launch {
-            easyScanDao.withPages(setOf(pageId)) { page ->
+            easyScanDao.withPages(setOf(pageId), Page.Status.Initial) { page ->
                 if (page.orientation.isDefined()) {
                     val newOrientation =
                         if (clockwise) {
@@ -1097,17 +1137,15 @@ class DefaultEasyScanRepository @Inject constructor(
         }
     }
 
-    override fun getInputCutoutAsync(pageId: Page.Id, expand: Boolean): Deferred<ScanCutout?> = async {
-        easyScanDao.getInputCutout(pageId)?.apply {
-            if (expand) {
-                expand()
-            }
+    override fun setPageOrientation(pageId: Page.Id, orientation: ScanOrientation) {
+        launch {
+            easyScanDao.setPageOrientation(pageId, orientation)
         }
     }
 
-    override fun setPageCutout(pageId: Page.Id, cutout: ScanCutout) {
+    override fun setPageCutout(pageId: Page.Id, cutout: ScanCutout, orientation: ScanOrientation) {
         launch {
-            easyScanDao.setPageCutout(pageId, cutout)
+            easyScanDao.setPageCutout(pageId, cutout, orientation)
         }
     }
 
@@ -1117,7 +1155,7 @@ class DefaultEasyScanRepository @Inject constructor(
             .distinctUntilChanged()
             .map { imageSource ->
                 imageSource?.let {
-                    loadPictureAsync(it.fileId).await().withOrientation(it.orientation)
+                    loadPicture(it.fileId).withOrientation(it.orientation)
                 }
             }
 
@@ -1244,41 +1282,31 @@ class DefaultEasyScanRepository @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun queryPagePreviews(pageIds: List<Page.Id>): Flow<List<EasyScanRepository.PageBitmap>> =
         easyScanDao
-            .queryPageStates(pageIds)
+            .queryPages(pageIds)
             .filter { it.isNotEmpty() }
             .distinctUntilChanged()
-            .mapLatest { states ->
-                states.map { state ->
-                    // Select
-                    val (fileId, orientation) = when (state.page.status) {
-                        Page.Status.Input -> Pair(
-                            state.input?.inputPreviewFileId,
-                            state.page.orientation
-                        )
+            .mapLatest { list ->
+                list.map { page ->
+                    val pageStatus = easyScanDao.getPagePictureState(
+                        page.id,
+                        true,
+                        null,
+                        ::loadPicture)
 
-                        Page.Status.Original -> Pair(
-                            state.original?.originalPreviewFileId,
-                            state.page.orientation
-                        )
+                    if (pageStatus?.picture != null) {
+                        val orientation = pageStatus.page.orientation
+                        val bitmap = withContext(Dispatchers.IO) {
+                            pageStatus.picture.createBitmap(
+                                ScanPicture.DISPLAY_BITMAP or ScanPicture.FIT_TO_HARDWARE or ScanPicture.FIT_TO_TEXTURE,
+                                orientation)
+                        }
 
-                        Page.Status.Pending -> Pair(
-                            state.pending?.pendingPreviewFileId,
-                            state.page.orientation
-                        )
-
-                        Page.Status.Complete, Page.Status.Output -> Pair(
-                            state.complete?.completePreviewFileId,
-                            state.page.orientation
-                        )
-                        else -> Pair(null, null)
-                    }
-
-                    if (fileId != null && orientation != null) {
-                        EasyScanRepository.PageBitmap(state.page.id, loadBitmapAsync(fileId, orientation).await())
+                        EasyScanRepository.PageBitmap(page.id, bitmap)
                     } else {
-                        EasyScanRepository.PageBitmap(state.page.id, null)
+                        EasyScanRepository.PageBitmap(page.id, null)
                     }
                 }
+
             }
 
     /**
@@ -1291,11 +1319,11 @@ class DefaultEasyScanRepository @Inject constructor(
             is Page.Paper.Predefined -> {
                 // NOTE: We hope than Page.PaperSize.Predefined.Size
                 // is equivalent with ImageWriter.Paper.Size!
-                val paperSize = ImageWriter.Paper.Size.values()[page.paper.size.ordinal]
+                val paperSize = ImageWriter.Paper.Size.entries[page.paper.size.ordinal]
 
                 // NOTE: We hope than Page.PaperSize.Orientation
                 // is equivalent ImageWriter.Paper.Orientation!
-                val paperOrientation = ImageWriter.Paper.Orientation.values()[page.paperOrientation.ordinal]
+                val paperOrientation = ImageWriter.Paper.Orientation.entries[page.paperOrientation.ordinal]
 
                 setupPaperSize(paperSize, paperOrientation)
             }
@@ -1326,8 +1354,5 @@ class DefaultEasyScanRepository @Inject constructor(
 
             return length
         }
-
     }
-
 }
-

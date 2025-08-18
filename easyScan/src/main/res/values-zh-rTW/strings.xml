@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">載入中…</string>
+    <string name="analyze">分析中…</string>
+    <string name="recognize">辨識</string>
+    <string name="read_empty_text">在此頁面上找不到任何文字。</string>
+</resources>

@@ -2,6 +2,7 @@ package com.pixelnetica.easyscan.data
 
 import android.net.Uri
 import android.os.Parcelable
+import androidx.annotation.Keep
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -89,6 +90,11 @@ data class Page(
     @Embedded(prefix = "recognition")
     val recognitionTask: RecognitionTask = RecognitionTask(),
 
+    /**
+     * Increment each time when page needs to update
+     */
+    @ColumnInfo(defaultValue = "0")
+    val statusCount: Int = 0,
     ) {
     @Parcelize
     data class Id(
@@ -172,7 +178,7 @@ data class Page(
                 } else {
                     // NOTE: value is negative!
                     val index = -(value + 1).toInt()
-                    Predefined(Page.Paper.Predefined.Size.values()[index])
+                    Predefined(Predefined.Size.entries[index])
                 }
         }
     }
@@ -207,6 +213,7 @@ data class Page(
             if (ready) Ready else Nothing
         )
 
+        @Keep
         enum class Job {
             /**
              * cancel current task and doesn't change result
@@ -243,18 +250,11 @@ data class Page(
     }
 
 
+    @Keep
     enum class ResetCutout {
         Reset,
         Setup,
         Expand
-    }
-
-    enum class ChangeOrientation {
-        Reset,
-        None,
-        Rotate90,
-        Rotate180,
-        Rotate270,
     }
 }
 

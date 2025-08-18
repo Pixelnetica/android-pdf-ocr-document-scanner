@@ -31,11 +31,12 @@ import javax.inject.Named
 class PageSliderViewModel @Inject constructor(
     private val repository: EasyScanRepository,
     @Named("startPageId")
-    _startPageId: PageViewId,
+    startPageId: PageViewId,
     ) : ViewModel() {
 
     // Return the same PageContent instance for the same Page.Id
     private val pageContentCache = WeakHashMap<Page.Id, PageContent>()
+
     val pageContent  = repository.pageIds.map { list ->
         list.map { pageId ->
             pageContentCache.cache(pageId) {
@@ -45,7 +46,7 @@ class PageSliderViewModel @Inject constructor(
     }
 
     // Page to scroll after operations
-    private val _showPageId = MutableStateFlow(_startPageId)
+    private val _showPageId = MutableStateFlow(startPageId)
     val showPageId = _showPageId.asStateFlow()
 
     fun resetShowPage() {
@@ -62,17 +63,20 @@ class PageSliderViewModel @Inject constructor(
 
         val pagePicture  =
             repository
-                .queryPageState(pageId)
+                .queryPagePictureState(pageId, false, null)
                 .map { pageState ->
-                    val picture = repository.getPagePictureAsync(pageState).await()
                     val orientation = pageState.page.orientation
                     val isComplete = pageState.page.status.isAtLeast(Page.Status.Complete)
-                    PageViewPicture(picture, orientation, isComplete)
+                    PageViewPicture(pageState.picture, orientation, isComplete)
                 }
 
-        val profile  = repository.queryPageProfile(pageId).filterNotNull().map { pageProfile ->
-            PageViewProfile(pageProfile)
-        }
+        val profile  =
+            repository
+                .queryPageProfile(pageId)
+                .filterNotNull()
+                .map { pageProfile ->
+                    PageViewProfile(pageProfile)
+                }
 
         fun deletePage() {
             repository.deletePages(pageId)
@@ -81,6 +85,7 @@ class PageSliderViewModel @Inject constructor(
         fun rotatePage() {
             repository.rotatePage(pageId, false)
         }
+
         fun setShadows(shadows: Boolean) {
             repository.setPageShadows(pageId, shadows)
         }
@@ -96,18 +101,6 @@ class PageSliderViewModel @Inject constructor(
                 }
             )
         }
-
-/*
-        override fun equals(other: Any?): Boolean =
-            if (other is PageContent) {
-                pageId == other.pageId
-            } else {
-                super.equals(other)
-            }
-
-        override fun hashCode(): Int =
-            Objects.hash(pageId)
-*/
 
         override fun toString(): String =
             "PageSliderViewModel {pageId=${pageId.id}}"
@@ -129,16 +122,6 @@ class PageSliderViewModel @Inject constructor(
         const val REPRESENTATIVE = "PageSlider"
     }
 }
-
-/*
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class StartPageId {
-    companion object {
-        const val KEY = "startPageId"
-    }
-}
-*/
 
 @Module
 @InstallIn(ViewModelComponent::class)

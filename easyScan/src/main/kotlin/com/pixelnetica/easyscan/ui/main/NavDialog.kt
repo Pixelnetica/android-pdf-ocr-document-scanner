@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,9 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.pixelnetica.support.defaultScrollbarConfig
+import com.pixelnetica.support.verticalScrollWithScrollbar
 
 /**
  * Common style for navigation dialogs
@@ -44,8 +45,8 @@ fun NavDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(16.dp),
+                .padding(16.dp)
+            ,
         ) {
             // Title
             Row(
@@ -79,7 +80,17 @@ fun NavDialog(
 
             HorizontalDivider(Modifier.padding(bottom = 16.dp))
 
-            content(navController)
+            val scrollState = rememberScrollState()
+            Column(modifier = Modifier
+                // Apply the scrollbar first
+                .verticalScrollWithScrollbar(
+                    scrollState = scrollState,
+                    scrollbarConfig = defaultScrollbarConfig(),
+                )
+                ,
+                ) {
+                content(navController)
+            }
         }
     }
 }

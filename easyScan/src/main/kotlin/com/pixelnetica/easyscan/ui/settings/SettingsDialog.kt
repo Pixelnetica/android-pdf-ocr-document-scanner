@@ -22,7 +22,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -32,16 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.pixelnetica.composability.drawableResource
+import com.pixelnetica.composable.drawableResource
 import com.pixelnetica.easyscan.BuildConfig
 import com.pixelnetica.easyscan.EasyScanSettings
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.appSettingsDataStore
 import com.pixelnetica.easyscan.ui.main.NavDialog
-import com.pixelnetica.composability.handleUrlLinks
-import com.pixelnetica.composability.htmlToAnnotatedString
-import com.pixelnetica.composability.visibility
-import com.pixelnetica.support.Spinner
+import com.pixelnetica.composable.htmlToAnnotatedString
+import com.pixelnetica.composable.Spinner
 import kotlinx.coroutines.launch
 
 @Composable
@@ -75,7 +72,7 @@ fun SettingsDialog(
 
     // Build message once!
     val textColor = LocalContentColor.current
-    val accentColor = MaterialTheme.colorScheme.primaryContainer
+    val accentColor = MaterialTheme.colorScheme.primary
     val annotatedMessage = remember(textColor, accentColor) {
         val packageName = context.applicationContext.packageName
         val packageInfo = runCatching {
@@ -101,18 +98,14 @@ fun SettingsDialog(
             ),
             packageName,
             versionName,
-            BuildConfig.GIT_HASH,
         )
     }
 
-    val uriHandler = LocalUriHandler.current
-    ClickableText(
+    Text(
         text = annotatedMessage,
         modifier = Modifier.padding(ButtonDefaults.IconSpacing),
         style = MaterialTheme.typography.bodySmall,
-    ) { position ->
-        annotatedMessage.handleUrlLinks(uriHandler, position)
-    }
+    )
 
     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
 

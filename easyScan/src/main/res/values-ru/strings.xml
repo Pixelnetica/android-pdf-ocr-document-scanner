@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">Загрузка…</string>
+    <string name="analyze">Анализ…</string>
+    <string name="recognize">Распознавание</string>
+    <string name="read_empty_text">Текст на странице не обнаружен</string>
+</resources>

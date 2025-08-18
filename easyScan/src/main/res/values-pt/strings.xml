@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loading">Carregando…</string>
+    <string name="analyze">A analisar…</string>
+    <string name="recognize">Reconhecimento</string>
+    <string name="read_empty_text">Não foi possível encontrar qualquer texto nesta página.</string>
+</resources>
