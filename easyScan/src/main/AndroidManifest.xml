@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
-
+    <!-- gwpAsanMode enables GWP-ASan, Android's sampled native memory-error detector
+         (Android 11+, ignored on older devices). When it catches a heap error in the
+         native SDK layer, the crash report carries allocation and deallocation
+         stack traces, which reach whatever crash reporter the app installs. -->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -10,6 +12,7 @@
         android:theme="@style/Theme.EasyScan"
         android:supportsRtl="true"
         android:name=".EasyScanApp"
+        android:gwpAsanMode="always"
         >
 
         <activity
@@ -26,17 +29,6 @@
             </intent-filter>
         </activity>
 
-        <provider
-            android:name="com.pixelnetica.easyscan.ui.main.EasyScanFileProvider"
-            android:authorities="${applicationId}.share.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/share_provider_paths" />
-        </provider>
-
-
         <!-- Trigger Google Play services to install the backported photo picker module. -->
         <service android:name="com.google.android.gms.metadata.ModuleDependencies"
             android:enabled="false"
@@ -47,6 +39,16 @@
             </intent-filter>
             <meta-data android:name="photopicker_activity:0:required" android:value="" />
         </service>
+
+        <provider
+            android:name=".ui.main.EasyScanFileProvider"
+            android:authorities="${applicationId}.share.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_provider_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -3,6 +3,7 @@ package com.pixelnetica.easyscan.ui.pagescreen
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.data.EasyScanRepository
 import com.pixelnetica.easyscan.data.Page
@@ -20,6 +21,9 @@ import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -61,14 +65,43 @@ class PageSliderViewModel @Inject constructor(
 
         fun asViewId(): PageViewId = PageViewId(pageId)
 
-        val pagePicture  =
+        /**
+         * Shared deliberately, not collected afresh per reader.
+         *
+         * The image and the controls that act on it are drawn by different
+         * parts of the screen. Reading this separately in each would let them
+         * hold different answers for the same page for a moment - long enough
+         * to offer an action on an image the screen has already given up on -
+         * and would load the same picture twice besides.
+         */
+        val pagePicture: StateFlow<PageViewPicture> =
             repository
                 .queryPagePictureState(pageId, false, null)
                 .map { pageState ->
                     val orientation = pageState.page.orientation
                     val isComplete = pageState.page.status.isAtLeast(Page.Status.Complete)
-                    PageViewPicture(pageState.picture, orientation, isComplete)
+                    PageViewPicture(
+                        pageState.picture,
+                        orientation,
+                        isComplete,
+                        isUnavailable = pageState.page.status == Page.Status.Invalid,
+                    )
                 }
+                .stateIn(
+                    scope = viewModelScope,
+                    // Stop the moment nobody is looking, and drop the value
+                    // with it. A picture holds native memory, so keeping one
+                    // warm for a page that is no longer on screen would hold
+                    // that memory for as long as this screen lives - and
+                    // handing a returning reader the old picture of a page
+                    // that has since become unusable is exactly the stale
+                    // answer this sharing exists to prevent.
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 0,
+                        replayExpirationMillis = 0,
+                    ),
+                    initialValue = PageViewPicture.Empty,
+                )
 
         val profile  =
             repository

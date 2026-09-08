@@ -456,6 +456,23 @@ interface EasyScanDao {
     )
     fun queryDataFiles(): Flow<List<DataFile>>
 
+    /**
+     * The referenced paths as they stand right now.
+     *
+     * The observable query above delivers a snapshot that was current when it
+     * was emitted; anything deciding whether a file on disk is still wanted
+     * needs the paths as of the moment it asks. Deliberately not a transaction:
+     * it is read while file housekeeping holds its lock, and a page write
+     * waiting for that same lock must be able to take it and open its own
+     * transaction afterwards.
+     */
+    @Query(
+        """
+            SELECT path FROM DataFile
+        """
+    )
+    suspend fun getDataFilePaths(): List<String>
+
     @Insert
     suspend fun insertPage(page: Page): Long
 
@@ -538,12 +555,24 @@ interface EasyScanDao {
         pageId: Page.Id,
         preview: Boolean,
         requiredStatus: Page.Status? = null,
-        loader: suspend (DataFile) -> ScanPicture,
+        loader: suspend (DataFile) -> ScanPicture?,
+        missingFileMessage: String,
         )
     : PageState? =
         getPageState(pageId)?.let { pageState: PageState ->
             with(pageState) {
-                when (requiredStatus ?: page.status) {
+                // A page already known to be unusable stays unusable, whatever
+                // the caller asks for. Screens that request a particular status
+                // - the crop screen always asks for the input - would otherwise
+                // reach straight past the recorded failure and open the same
+                // missing file again.
+                val effectiveStatus =
+                    if (page.status == Page.Status.Invalid)
+                        Page.Status.Invalid
+                    else
+                        requiredStatus ?: page.status
+
+                when (effectiveStatus) {
                     Page.Status.Invalid, Page.Status.Initial ->
                         null
 
@@ -592,7 +621,24 @@ interface EasyScanDao {
                         "Data file is missing for $previewMsg of page ${page.id} with status ${page.status.name}"
                     }
                 }?.let { dataFile: DataFile ->
-                    pageState.copy(picture = loader(dataFile))
+                    loader(dataFile)?.let { picture ->
+                        pageState.copy(picture = picture)
+                    } ?: run {
+                        // The row survived but its image file did not. Record
+                        // that against the page so it stays failed after a
+                        // restart, and hand the caller the page as it now is -
+                        // this very emission has to read as failed, or the
+                        // screen that asked would try to draw a picture that
+                        // does not exist.
+                        failedPage(PageFailedStatus(page, missingFileMessage))
+                        pageState.copy(
+                            page = page.copy(
+                                status = Page.Status.Invalid,
+                                errorMessage = missingFileMessage,
+                            ),
+                            picture = null,
+                        )
+                    }
                 } ?: pageState
             }
         }
@@ -891,8 +937,11 @@ interface EasyScanDao {
 
     @Transaction
     suspend fun resetPageText(pageId: Page.Id) {
-        // Keep existing text
-        tryInsertText(Text(pageId, ScanText(), ScanText()))
+        // Keep existing text. The insert serializes the empty text by value,
+        // so the temporary native holder is released right away.
+        ScanText().use { empty ->
+            tryInsertText(Text(pageId, empty, empty))
+        }
 
         // Cleanup progress
         updateRecognition(Recognition(pageId))
@@ -907,7 +956,11 @@ interface EasyScanDao {
             }
 
             is RecognizedText.Cleared -> {
-                updateText(RecognizedText.Recognized(text.id, ScanText(), ScanText()))
+                // The update serializes the empty text by value, so the
+                // temporary native holder is released right away.
+                ScanText().use { empty ->
+                    updateText(RecognizedText.Recognized(text.id, empty, empty))
+                }
                 false
             }
 
@@ -1052,6 +1105,22 @@ interface EasyScanDao {
     )
     fun queryPagesHaveText(pages: List<Page.Id>): Flow<Boolean>
 
+    /** How many pages a share session was asked for, usable or not. */
+    @Query(
+        """
+            SELECT COUNT(sharePageId) FROM ShareItem WHERE shareItemId = :sessionId
+        """
+    )
+    suspend fun getShareItemCount(sessionId: ShareSession.Id): Int
+
+    /** Whether any of these pages has lost the image it would be exported from. */
+    @Query(
+        """
+            SELECT COUNT(pageId) > 0 FROM Page WHERE pageId IN (:pages) AND status = 'Invalid'
+        """
+    )
+    fun queryPagesUnavailable(pages: List<Page.Id>): Flow<Boolean>
+
     @Insert
     suspend fun insertShareSession(session: ShareSession): Long
 
@@ -1104,12 +1173,29 @@ interface EasyScanDao {
         }
     }
 
+    /**
+     * Sessions whose pages have all finished, and are therefore ready to write.
+     *
+     * A page whose image file has gone missing is marked invalid and never
+     * reaches the finished state, so counting it as "still working" would keep
+     * its session waiting for something that is never going to happen - and
+     * the share dialog waiting with it. Such a page is excluded from the
+     * readiness question instead, so the session is reached rather than
+     * stranded. Reaching it is not the same as exporting it: the writer sees
+     * that a page it was asked for is not among the ones it can write, and
+     * produces nothing rather than a document quietly missing a page.
+     */
     @Query(
         """
-            SELECT ShareSession.* 
+            SELECT ShareSession.*
                 FROM ShareSession
-                JOIN PendingShares ON shareSessionId = pendingShareSessionId
-                    AND (pendingCount = 0)
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM ShareItem
+                        JOIN Page ON sharePageId = pageId
+                    WHERE shareItemId = shareSessionId
+                        AND Page.status != 'Invalid'
+                        AND (Page.status != 'Output' OR Page.recognitionStatus > 1)
+                )
         """
     )
     @Transaction

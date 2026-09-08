@@ -9,6 +9,7 @@ import com.pixelnetica.design.lang.LanguageManager
 import com.pixelnetica.easyscan.AppSettings
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.BuildConfig
+import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.EasyScanSettings
 import com.pixelnetica.easyscan.PaperProperties
 import com.pixelnetica.easyscan.UserProcessing
@@ -58,11 +59,14 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.util.*
 import javax.inject.Inject
@@ -140,6 +144,9 @@ interface EasyScanRepository {
 
     fun queryPagesHaveText(pages: List<Page.Id>): Flow<Boolean>
 
+    /** Whether any of these pages has lost the image it would be exported from. */
+    fun queryPagesUnavailable(pages: List<Page.Id>): Flow<Boolean>
+
     fun createShareSession(type: ShareSession.Type, pages: List<Page.Id>)
 
     fun queryHasShareSessions(): Flow<Boolean>
@@ -212,6 +219,37 @@ class DefaultEasyScanRepository @Inject constructor(
         }
     }
 
+    /**
+     * Page files are moved into place by [withdraw] *before* the database
+     * transaction that records them commits, so for a moment a file exists on
+     * disk that the store does not yet admit to owning. File housekeeping and
+     * page writes take turns through this lock, so housekeeping never inspects
+     * a page that is only half written.
+     *
+     * Always taken **outside** a database transaction, never inside one: a
+     * page write holding a transaction while waiting for this lock, against
+     * housekeeping holding the lock while it queries, is a deadlock.
+     */
+    private val pageFileLock = Mutex()
+
+    internal suspend fun <T> withPageFiles(block: suspend () -> T): T =
+        pageFileLock.withLock { block() }
+
+    /**
+     * Run a page transaction that also moves files into the page store.
+     *
+     * The lock is taken here, around the transaction rather than inside it,
+     * which is the order that keeps [pageFileLock] free of deadlock. Stages
+     * that only rewrite rows do not need this and call the dao directly.
+     */
+    private suspend fun withPageFileTransaction(
+        pageIds: Set<Page.Id>,
+        requiredStatus: Page.Status,
+        block: suspend EasyScanDao.(Page) -> Unit,
+    ) = withPageFiles {
+        easyScanDao.withPages(pageIds, requiredStatus, block)
+    }
+
     // Store existing picture
     private val pictureCache = WeakHashMap<DataFile, ScanPicture>()
 
@@ -222,17 +260,73 @@ class DefaultEasyScanRepository @Inject constructor(
             }
         }.id
 
-    private suspend fun loadPicture(dataFile: DataFile): ScanPicture {
-        val picture = pictureCache.cache(dataFile) {
-            withContext(Dispatchers.IO) {
-                FileInputStream(dataFile.buildFile(pagesDir)).use { stream ->
-                    ScanPicture.load(stream)
+    /**
+     * Load a page's picture, or report that its file is no longer there.
+     *
+     * A page's row and its image file are separate stores and they do drift
+     * apart on real devices - a storage cleaner, a restore, or a page saved
+     * while file housekeeping was running. That is a page-level failure, not
+     * an I/O error worth propagating, so it comes back as no picture. A file
+     * that is present but unreadable is a different problem and still raises.
+     */
+    private suspend fun loadPicture(dataFile: DataFile): ScanPicture? {
+        val picture = try {
+            pictureCache.cache(dataFile) {
+                withContext(Dispatchers.IO) {
+                    FileInputStream(dataFile.buildFile(pagesDir)).use { stream ->
+                        ScanPicture.load(stream)
+                    }
                 }
             }
+        } catch (missingFile: FileNotFoundException) {
+            log.e("Page file ${dataFile.path} is gone: ${missingFile.message.orEmpty()}")
+            return null
         }
 
         // Return a copy to process
         return ScanPicture(picture)
+    }
+
+    /** The message a page carries once its image file has gone missing. */
+    private val missingFileMessage: String
+        get() = context.getString(R.string.page_error_image_file_missing)
+
+    /**
+     * The one way into a page's stored picture.
+     *
+     * Every screen resolves a page through here, so the handling of a page
+     * whose file has gone missing lives in one place rather than in each
+     * caller.
+     */
+    private suspend fun pagePictureState(
+        pageId: Page.Id,
+        preview: Boolean,
+        requiredStatus: Page.Status? = null,
+    ): PageState? =
+        easyScanDao.getPagePictureState(
+            pageId,
+            preview,
+            requiredStatus,
+            ::loadPicture,
+            missingFileMessage,
+        )
+
+    /**
+     * The page's file turned out to be gone while exporting it. Record that
+     * against the page and stop the export: a document quietly missing a page
+     * is worse than none, and the record is what lets the next attempt explain
+     * itself instead of failing the same silent way again.
+     */
+    private suspend fun abortExportForMissingFile(pageId: Page.Id): Nothing {
+        failMissingFile(pageId)
+        error("The image for page ${pageId.id} is no longer on the device")
+    }
+
+    /** Record that a page's image file is gone, so it stays failed after a restart. */
+    private suspend fun failMissingFile(pageId: Page.Id) {
+        easyScanDao.getPage(pageId, Page.Status.entries.toSet())?.let { page ->
+            easyScanDao.failedPage(PageFailedStatus(page, missingFileMessage))
+        }
     }
 
     private suspend fun getDataFile(fileId: DataFile.Id) =
@@ -291,7 +385,10 @@ class DefaultEasyScanRepository @Inject constructor(
         .mapLatest { pages ->
             pages.associate { page: Page ->
                 page.id to runCatching {
-                    // Load picture from specified URI
+                    // Load picture from specified URI. Do not close this
+                    // picture or its preview: writeTmpFile hands both wrappers
+                    // to the page cache together with the saved files, so they
+                    // stay owned by the cache after this block.
                     val picture = ScanPicture(context, checkNotNull(page.initialUri))
 
                     // Reset orientation for data file
@@ -308,7 +405,7 @@ class DefaultEasyScanRepository @Inject constructor(
                 }
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys, Page.Status.Initial) { page ->
+            withPageFileTransaction(data.keys, Page.Status.Initial) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertInput(
@@ -351,12 +448,7 @@ class DefaultEasyScanRepository @Inject constructor(
         .distinctUntilChanged()
         .map { list ->
             list.map { pageInput ->
-                val state = easyScanDao.getPagePictureState(
-                    pageInput.page.id,
-                    false,
-                    null,
-                    ::loadPicture
-                )
+                val state = pagePictureState(pageInput.page.id, false)
 
                 pageInput.copy(picture = state?.picture)
             }.filter {
@@ -364,58 +456,60 @@ class DefaultEasyScanRepository @Inject constructor(
             }
         }
         .mapLatest { items ->
-            // Prepare ScanDetector for each set of images
+            // Prepare ScanDetector for each set of images. The detector holds
+            // native memory, so use{} releases it as soon as this batch is
+            // processed - including when a newer emission cancels this one.
             val languageManager = LanguageManager.getInstance(context = context)
-            val orientationDetector = languageManager.detectorPath.first()?.let {
+            languageManager.detectorPath.first()?.let {
                 ScanDetector(it)
-            }
+            }.use { orientationDetector ->
+                items.associate { (page, input, inputPicture) ->
+                    page.id to runCatching {
+                        // Setup cutout
+                        val (cutout, undefined) = when (page.resetCutout) {
+                            Page.ResetCutout.Reset -> Pair(
+                                input.inputCutout,
+                                !input.inputCutout.isDefined
+                            )
 
-            items.associate { (page, input, inputPicture) ->
-                page.id to runCatching {
-                    // Setup cutout
-                    val (cutout, undefined) = when (page.resetCutout) {
-                        Page.ResetCutout.Reset -> Pair(
-                            input.inputCutout,
-                            !input.inputCutout.isDefined
+                            Page.ResetCutout.Setup -> Pair(checkNotNull(page.cutout) {
+                                "User cutout is not defined!"
+                            }, false)
+
+                            Page.ResetCutout.Expand -> Pair(ScanCutout(input.inputCutout).apply {
+                                expand()
+                            }, false)
+                        }
+
+                        val picture = checkNotNull(inputPicture) {
+                            "Cannot load the input picture!"
+                        }
+
+                        picture.rectify(cutout)
+
+                        // Try to detect orientation of text AFTER rectify to cutout was found
+                        val detectedOrientation =
+                            if (page.autoDetectOrientation && orientationDetector != null && picture.detectOrientation(orientationDetector)) {
+                                picture.orientation
+                        } else {
+                            ScanOrientation.Undefined
+                        }
+
+                        OriginalData(
+                            picture.writeTmpFile(),
+                            picture.makePreview().writeTmpFile(),
+                            cutout,
+                            undefined,
+                            detectedOrientation,
                         )
-
-                        Page.ResetCutout.Setup -> Pair(checkNotNull(page.cutout) {
-                            "User cutout is not defined!"
-                        }, false)
-
-                        Page.ResetCutout.Expand -> Pair(ScanCutout(input.inputCutout).apply {
-                            expand()
-                        }, false)
                     }
-
-                    val picture = checkNotNull(inputPicture) {
-                        "Cannot load the input picture!"
-                    }
-
-                    picture.rectify(cutout)
-
-                    // Try to detect orientation of text AFTER rectify to cutout was found
-                    val detectedOrientation =
-                        if (page.autoDetectOrientation && orientationDetector != null && picture.detectOrientation(orientationDetector)) {
-                            picture.orientation
-                    } else {
-                        ScanOrientation.Undefined
-                    }
-
-                    OriginalData(
-                        picture.writeTmpFile(),
-                        picture.makePreview().writeTmpFile(),
-                        cutout,
-                        undefined,
-                        detectedOrientation,
-                    )
                 }
             }
         }
         .onEach { data ->
             // Simple setup cutout
             // There isn't any processing
-            easyScanDao.withPages(data.keys, Page.Status.Input) { page ->
+            withPageFileTransaction(data.keys, Page.Status.Input) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertOriginal(
@@ -483,13 +577,8 @@ class DefaultEasyScanRepository @Inject constructor(
         .filter { it.isNotEmpty() }
         .map { list ->
             list.map { pagePending ->
-                val state = easyScanDao.getPagePictureState(
-                    pagePending.page.id,
-                    false,
-                    // NOTE: Here we get original picture
-                    Page.Status.Original,
-                    ::loadPicture
-                )
+                // NOTE: Here we get original picture
+                val state = pagePictureState(pagePending.page.id, false, Page.Status.Original)
 
                 pagePending.copy(picture = state?.picture)
             }.filter {
@@ -519,7 +608,7 @@ class DefaultEasyScanRepository @Inject constructor(
 
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys, Page.Status.Pending) { page ->
+            withPageFileTransaction(data.keys, Page.Status.Pending) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         val completeImage = createPageFile(page, "complete").withdrawPictureFile(image)
@@ -564,12 +653,7 @@ class DefaultEasyScanRepository @Inject constructor(
         .distinctUntilChanged()
         .map { list ->
             list.map { pageComplete: PageComplete ->
-                val state = easyScanDao.getPagePictureState(
-                    pageComplete.page.id,
-                    false,
-                    null,
-                    ::loadPicture
-                )
+                val state = pagePictureState(pageComplete.page.id, false)
 
                 pageComplete.copy(picture = state?.picture)
             }.filter {
@@ -596,7 +680,7 @@ class DefaultEasyScanRepository @Inject constructor(
                 }
             }
         }.onEach { data ->
-            easyScanDao.withPages(data.keys, Page.Status.Complete) { page ->
+            withPageFileTransaction(data.keys, Page.Status.Complete) { page ->
                 runCatching {
                     with(data.getValue(page.id).getOrThrow()) {
                         insertOutput(
@@ -636,12 +720,7 @@ class DefaultEasyScanRepository @Inject constructor(
         }
         .map { list ->
             list.map { pageComplete ->
-                val state = easyScanDao.getPagePictureState(
-                    pageComplete.page.id,
-                    false,
-                    Page.Status.Complete,
-                    ::loadPicture
-                )
+                val state = pagePictureState(pageComplete.page.id, false, Page.Status.Complete)
 
                 pageComplete.copy(picture = state?.picture)
             }.filter {
@@ -684,8 +763,10 @@ class DefaultEasyScanRepository @Inject constructor(
                                 // Clear recognition state
                                 easyScanDao.resetPageText(pageId)
 
-                                // Recognize page
-                                val reader = ScanReader(
+                                // Recognize page. The reader wraps a full recognition
+                                // engine in native memory - use{} releases it as soon
+                                // as the page is read.
+                                ScanReader(
                                     langStore.directory,
                                     languages,
                                     object : ScanReader.ProgressCallback {
@@ -703,9 +784,9 @@ class DefaultEasyScanRepository @Inject constructor(
                                             }
                                         }
                                     },
-                                )
-
-                                picture.read(reader)
+                                ).use { reader ->
+                                    picture.read(reader)
+                                }
                                 yield()
 
                                 RecognizedText.Recognized(page.id, picture.scanText)
@@ -734,6 +815,16 @@ class DefaultEasyScanRepository @Inject constructor(
             }"
 
             runCatching {
+                if (sessionItems.items.size != easyScanDao.getShareItemCount(sessionItems.session.id)) {
+                    // A page asked for is not among the ones that can be
+                    // written - its image went missing, most likely between
+                    // this export being asked for and it running. Exporting
+                    // the rest would hand back a document quietly missing a
+                    // page, so nothing is produced. The session still ends,
+                    // which is what stops the dialog waiting.
+                    return@runCatching ShareResult.Empty
+                }
+
                 when (sessionItems.session.type) {
                     ShareSession.Type.PNG -> {
                         val total = sessionItems.items.size
@@ -754,7 +845,14 @@ class DefaultEasyScanRepository @Inject constructor(
                             val shareFile = makeShareFile("$title$pageSuffix.png")
                             val outputFile = getDataFile(state.output.outputFileId).buildFile(pagesDir)
 
-                            outputFile.copyTo(shareFile, true)
+                            try {
+                                outputFile.copyTo(shareFile, true)
+                            } catch (missingFile: FileNotFoundException) {
+                                // Asking first and copying second would leave a
+                                // gap for the file to vanish in between, so the
+                                // copy itself is what reports it.
+                                abortExportForMissingFile(state.page.id)
+                            }
 
                             shareFile
                         }
@@ -766,12 +864,15 @@ class DefaultEasyScanRepository @Inject constructor(
                         makeShareFile("$title.tif").let { shareFile ->
                             ImageWriterTiff(shareFile).use { writer ->
                                 sessionItems.items.forEach { state ->
-                                    // Load picture from Complete
-                                    val picture = loadPicture(state.complete.completeImageFileId)
-                                    picture.orientation = state.page.orientation
+                                    // Load picture from Complete; use{} releases its
+                                    // native pixels as soon as the page is written
+                                    (loadPicture(state.complete.completeImageFileId)
+                                        ?: abortExportForMissingFile(state.page.id)).use { picture ->
+                                        picture.orientation = state.page.orientation
 
-                                    writer.setupPaperSize(state.page)
-                                    writer.write(picture)
+                                        writer.setupPaperSize(state.page)
+                                        writer.write(picture)
+                                    }
                                 }
                             }
 
@@ -836,7 +937,9 @@ class DefaultEasyScanRepository @Inject constructor(
                                     AppSettings.ImageCompression.EXTREME -> ImageWriterPdf.ImageCompression.Extreme
                                     else -> throw IllegalArgumentException("Unknown image compression ${settings.imageCompression}")
                                 }
-                                writer.setImageCompression(imageCompression)
+                                // The writer copies the compression setting, so the
+                                // native compression object can be released right away
+                                imageCompression.use { writer.setImageCompression(it) }
 
                                 // Debug options to show hidden text only for DEBUG
                                 writer.showHiddenText(settings.showPdfHiddenText and BuildConfig.DEBUG)
@@ -847,22 +950,31 @@ class DefaultEasyScanRepository @Inject constructor(
                                     // Setup per-page PDF options
                                     writer.setupPaperSize(state.page)
 
-                                    val text =
+                                    val modifiedText =
                                         if (state.page.recognitionTask.isReady) {
-                                            state.text?.modified ?: ScanText()
+                                            state.text?.modified
                                         } else {
-                                            ScanText()
+                                            null
                                         }
 
-                                    // Load a picture from Complete
-                                    val picture: ScanPicture = loadPicture(state.complete.completeImageFileId)
+                                    // Load a picture from Complete; use{} releases its
+                                    // native pixels as soon as the page is written
+                                    (loadPicture(state.complete.completeImageFileId)
+                                        ?: abortExportForMissingFile(state.page.id)).use { picture ->
+                                        // Setup the picture. The picture copies the
+                                        // assigned text, so a freshly created empty
+                                        // fallback is released right away; a recognized
+                                        // text stays owned by its page state.
+                                        picture.orientation = state.page.orientation
+                                        if (modifiedText != null) {
+                                            picture.scanText = modifiedText
+                                        } else {
+                                            ScanText().use { picture.scanText = it }
+                                        }
 
-                                    // Setup the picture
-                                    picture.orientation = state.page.orientation
-                                    picture.scanText = text
-
-                                    // Write the picture
-                                    writer.write(picture)
+                                        // Write the picture
+                                        writer.write(picture)
+                                    }
                                 }
                             }
 
@@ -920,24 +1032,48 @@ class DefaultEasyScanRepository @Inject constructor(
             }.toSet()
         }
         .onEach { usedFiles ->
-            // Collect all existing files
-            pagesDir.walk().forEach { file ->
-                when {
-                    file.isFile ->
-                        if (!usedFiles.contains(file)) {
-                            file.delete()
-                        }
-
-                    file.isDirectory ->
-                        if (file.listFiles().isNullOrEmpty()) {
-                            file.delete()
-                        }
-                }
-            }
-
-            // Cleanup table
-            easyScanDao.clearUselessFiles()
+            sweepUselessFiles(usedFiles)
         }
+
+    /**
+     * Delete every page file the store no longer references, then drop the
+     * data-file rows that went with them.
+     *
+     * [usedFiles] is the set of referenced files carried by the database
+     * emission that triggered this sweep.
+     */
+    internal suspend fun sweepUselessFiles(usedFiles: Set<File>) = withPageFiles {
+        // [usedFiles] is a first filter, not the verdict. It was read when the
+        // emission was produced, so a page saved since then is missing from it
+        // through no fault of its own - and deleting a file a page still
+        // points at is what leaves that page permanently unopenable. Anything
+        // this set condemns is therefore confirmed against the store as it
+        // stands now, read once and only if there is something to confirm.
+        var referenced: Set<File>? = null
+
+        pagesDir.walk().forEach { file ->
+            when {
+                file.isFile ->
+                    if (!usedFiles.contains(file)) {
+                        val current = referenced ?: easyScanDao.getDataFilePaths()
+                            .mapTo(mutableSetOf()) { path -> File(pagesDir, path) }
+                            .also { referenced = it }
+
+                        if (!current.contains(file)) {
+                            file.delete()
+                        }
+                    }
+
+                file.isDirectory ->
+                    if (file.listFiles().isNullOrEmpty()) {
+                        file.delete()
+                    }
+            }
+        }
+
+        // Cleanup table
+        easyScanDao.clearUselessFiles()
+    }
     init {
         launch {
             coroutineScope {
@@ -970,11 +1106,7 @@ class DefaultEasyScanRepository @Inject constructor(
             .distinctUntilChanged()
             .map { list ->
                 list.mapNotNull { (pageState, representation) ->
-                    easyScanDao.getPagePictureState(
-                        pageState.page.id,
-                        preview,
-                        null,
-                        ::loadPicture)?.let { actualState ->
+                    pagePictureState(pageState.page.id, preview)?.let { actualState ->
                         PageViewport(actualState, representation)
                     }
                 }
@@ -989,7 +1121,7 @@ class DefaultEasyScanRepository @Inject constructor(
         .queryPage(pageId)
         .distinctUntilChanged()
         .mapLatest {
-            easyScanDao.getPagePictureState(pageId, preview, requiredStatus, ::loadPicture)
+            pagePictureState(pageId, preview, requiredStatus)
         }
         .filterNotNull()
 
@@ -1155,7 +1287,24 @@ class DefaultEasyScanRepository @Inject constructor(
             .distinctUntilChanged()
             .map { imageSource ->
                 imageSource?.let {
-                    loadPicture(it.fileId).withOrientation(it.orientation)
+                    // This route reads the page's file directly rather than
+                    // through the shared page-state resolver, so it has to
+                    // recognise a missing file itself - otherwise the text
+                    // screen would still die on a page every other screen
+                    // already reports as failed.
+                    val loaded = loadPicture(it.fileId)
+                    if (loaded == null) {
+                        failMissingFile(pageId)
+                        return@let null
+                    }
+
+                    val oriented = loaded.withOrientation(it.orientation)
+                    // withOrientation returns a new picture when the orientation
+                    // differs; release the intermediate copy in that case
+                    if (oriented !== loaded) {
+                        loaded.close()
+                    }
+                    oriented
                 }
             }
 
@@ -1228,6 +1377,9 @@ class DefaultEasyScanRepository @Inject constructor(
     override fun queryPagesHaveText(pages: List<Page.Id>): Flow<Boolean> =
         easyScanDao.queryPagesHaveText(pages).distinctUntilChanged()
 
+    override fun queryPagesUnavailable(pages: List<Page.Id>): Flow<Boolean> =
+        easyScanDao.queryPagesUnavailable(pages).distinctUntilChanged()
+
     override fun createShareSession(type: ShareSession.Type, pages: List<Page.Id>) {
         launch {
             easyScanDao.createNewShareSession(type, *pages.toTypedArray())
@@ -1287,11 +1439,7 @@ class DefaultEasyScanRepository @Inject constructor(
             .distinctUntilChanged()
             .mapLatest { list ->
                 list.map { page ->
-                    val pageStatus = easyScanDao.getPagePictureState(
-                        page.id,
-                        true,
-                        null,
-                        ::loadPicture)
+                    val pageStatus = pagePictureState(page.id, true)
 
                     if (pageStatus?.picture != null) {
                         val orientation = pageStatus.page.orientation

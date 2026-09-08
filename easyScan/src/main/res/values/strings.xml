@@ -10,6 +10,11 @@
     <string name="read_empty_text">Can\'t find any text on this page.</string>
 
     <string name="page_list_page_invalid_title" tools:ignore="MissingTranslation">Page processing failed</string>
+    <string name="page_error_image_file_missing" tools:ignore="MissingTranslation">The image for this page is no longer on the device</string>
+    <string name="page_unavailable_title" tools:ignore="MissingTranslation">Page cannot be opened</string>
+    <string name="page_unavailable_message" tools:ignore="MissingTranslation">The image for this page is no longer on the device, so the page cannot be opened. You can delete the page, or leave it in the list for now.</string>
+    <string name="page_unavailable_cancel" tools:ignore="MissingTranslation">Cancel</string>
+    <string name="share_unavailable_pages" tools:ignore="MissingTranslation">One or more of the selected pages cannot be exported, because their images are no longer on the device. Remove those pages from the selection, or delete them, and try again.</string>
     <string name="page_list_page_initial_title" translatable="false">@string/loading</string>
     <string name="page_list_page_source_title" tools:ignore="MissingTranslation">Cropping…</string>
     <string name="page_list_page_pending_title" tools:ignore="MissingTranslation">Processing…</string>

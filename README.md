@@ -17,16 +17,40 @@ The documentation for DSSDK Android version can be found by the link below:
 
 📖 [Pixelnetica Document Scanner SDK for Android documentation](https://pixelnetica.com/docs/document-scanner-sdk/android/introduction.html "Document Scanner SDK for Android Documentation")
 
-## Specify repository and credentials
+## Specify the repository
 
-Document Scanner SDK for Android available from Pixelnetica repository on GitHub and should be specified in the project.  
-The following information should be specified in **project**-level Gradle script. E.g. in  `local.properties` file (**do not** put it under version control).
+The Document Scanning SDK for Android is available from the Pixelnetica Maven repository. This
+is the **recommended** route: it is anonymous — no account, no access token, nothing to request
+— so this project builds from a fresh clone. The declaration is in the **project**-level Gradle
+script:
+
+   ```kotlin
+   repositories {
+     maven {
+       // Pixelnetica Document Scanning SDK
+       url = uri("https://maven.pixelnetica.com/")
+     }
+   }
+   ```
+
+Every file it serves is signed. The public key is at `https://maven.pixelnetica.com/KEYS`, and
+[Verifying the artifacts](https://pixelnetica.com/docs/document-scanner-sdk/android/add-to-android-project.html#4-verifying-the-artifacts)
+has the fingerprint, the command that checks a download, and the key-server configuration for
+Gradle's dependency verification.
+
+### The GitHub Packages route (still supported, sunsetting)
+
+The SDK is also published to GitHub Packages, which will keep receiving releases for at least
+two more versions and from which nothing already published is ever removed. That route needs a
+GitHub account and a **classic** access token with the `read:packages` scope — GitHub requires
+authentication for every package download, even for public packages. Put the credentials in
+`local.properties` (**do not** put that file under version control):
 
    ```kotlin
    repositories {
      maven {
        // Reference to Scanning SDK library
-       url = "https://maven.pkg.github.com/Pixelnetica/artifacts"
+       url = uri("https://maven.pkg.github.com/Pixelnetica/artifacts")
        credentials {
          username = "<YOUR GITHUB USER NAME>"
          password = "<YOUR GITHUB TOKEN>"
@@ -34,6 +58,10 @@ The following information should be specified in **project**-level Gradle script
      } 
    }
    ```
+
+New projects should prefer the anonymous repository above. See
+[Add to a project](https://pixelnetica.com/docs/document-scanner-sdk/android/add-to-android-project.html)
+for which SDK versions each repository serves.
 
 
 ### Auto Crop

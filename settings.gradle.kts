@@ -18,28 +18,46 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
 
-        // PIXELNETICA REPOSITORY
+        // The recommended route. Anonymous, credential-free, declared unconditionally, so
+        // this sample builds from a fresh clone with no local.properties at all -- which is
+        // exactly what a developer evaluating the SDK starts with.
         maven {
-            val properties = loadLocalProperties()
-            url = uri(checkNotNull(properties["packages_repository"]) {
-                "Cannot find key 'packages_repository' in file local.properties"
-            })
-            credentials {
-                username = properties.getProperty("packages_user_name")
-                password = properties.getProperty("packages_password")
+            name = "PixelneticaMaven"
+            url = uri("https://maven.pixelnetica.com/")
+        }
+
+        // GitHub Packages: still an active source, and sunsetting. Declared only when
+        // local.properties supplies all three, because it authenticates every request. Blank
+        // counts as absent, so a half-filled file fails here with a missing credential rather
+        // than at resolution time with an authentication error.
+        val properties = loadLocalPropertiesOrEmpty()
+        fun nonBlank(key: String): String? =
+            properties.getProperty(key)?.takeIf { it.isNotBlank() }
+
+        val ghUrl = nonBlank("packages_repository")
+        val ghUser = nonBlank("packages_user_name")
+        val ghPassword = nonBlank("packages_password")
+        if (ghUrl != null && ghUser != null && ghPassword != null) {
+            maven {
+                name = "GitHubPackages"
+                url = uri(ghUrl)
+                credentials {
+                    username = ghUser
+                    password = ghPassword
+                }
             }
         }
     }
 }
 
-fun loadLocalProperties(): java.util.Properties {
+// Tolerant by design: absence is the normal state for someone who has just cloned this sample,
+// not an error. The throwing version this replaced failed the build at configuration time,
+// before resolution was attempted and regardless of whether a credential was needed at all.
+fun loadLocalPropertiesOrEmpty(): java.util.Properties {
     val localProperties = java.util.Properties()
-
-    try {
-        localProperties.load(java.io.FileInputStream(File(rootDir, "local.properties")))
-    } catch (e: Exception) {
-        logger.error("File 'local.properties' is not found!")
-        throw e
+    val file = File(rootDir, "local.properties")
+    if (file.isFile) {
+        file.inputStream().use { localProperties.load(it) }
     }
     return localProperties
 }

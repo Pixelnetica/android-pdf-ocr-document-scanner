@@ -17,13 +17,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.rememberNavController
 import com.pixelnetica.easyscan.AppSettings
+import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.EasyScanSettings
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.appSettingsDataStore
 import com.pixelnetica.easyscan.data.EasyScanRepository
 import com.pixelnetica.easyscan.data.ShareResult
 import com.pixelnetica.easyscan.ui.theme.EasyScanTheme
+import com.pixelnetica.support.Tag
 import com.pixelnetica.support.collectOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.catch
@@ -68,7 +71,8 @@ class MainActivity : ComponentActivity() {
                         .imePadding()
                     ,
                 ) {
-                    MainNavigation()
+                    val navController = rememberNavController()
+                    MainNavigation(navController)
                 }
             }
         }
@@ -128,4 +132,6 @@ class MainActivity : ComponentActivity() {
 
         startActivity(chooserIntent)
     }
+
+    companion object : Tag by AppTagger("MainActivity")
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.easyscan.data.Page
 import com.pixelnetica.easyscan.ui.main.NavDialog
 import com.pixelnetica.composable.Spinner
@@ -76,6 +78,7 @@ fun PageProperties(
     }
 
     Spinner(
+        modifier = Modifier.testTag(TestTags.PROPS_PAPER_SIZE),
         label = stringResource(id = R.string.page_props_paper_label),
         options = paperMapper.displayList.toTypedArray(),
         index = paperSizeDisplayIndex,
@@ -92,6 +95,7 @@ fun PageProperties(
         mutableIntStateOf(orientation.ordinal)
     }
     Spinner(
+        modifier = Modifier.testTag(TestTags.PROPS_ORIENTATION),
         label = stringResource(id = R.string.page_props_paper_orientation),
         options = stringArrayResource(id = R.array.page_props_paper_orientation_list),
         index = orientationIndex,
@@ -110,6 +114,7 @@ fun PageProperties(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
+            modifier = Modifier.testTag(TestTags.PROPS_RECOGNIZE),
             checked = pageHasTextState,
             onCheckedChange = {
                 pageHasTextState = it
@@ -127,12 +132,14 @@ fun PageProperties(
         onClick = {
             viewModel.savePaper(
                 paper = paperMapper.getPaperForDisplayIndex(paperSizeDisplayIndex),
-                paperOrientation = Page.Paper.Orientation.values()[orientationIndex]
+                paperOrientation = Page.Paper.Orientation.entries[orientationIndex]
             )
             viewModel.ensurePageText(pageHasTextState)
             navController.popBackStack()
         },
-        modifier = Modifier.align(Alignment.End),
+        modifier = Modifier
+            .align(Alignment.End)
+            .testTag(TestTags.PROPS_OK),
     ) {
         Icon(
             imageVector = Icons.Default.Check,

@@ -29,12 +29,14 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,7 +47,12 @@ import com.pixelnetica.composable.painterDrawables
 import com.pixelnetica.composable.rememberDrawable
 import com.pixelnetica.easyscan.R
 import com.pixelnetica.easyscan.AppTagger
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.easyscan.ui.viewitem.PageViewProfile
+import com.pixelnetica.easyscan.analytics.AnalyticsEditorTrigger
+import com.pixelnetica.easyscan.analytics.AnalyticsEvent
+import com.pixelnetica.easyscan.analytics.AnalyticsSource
+import com.pixelnetica.easyscan.analytics.AppAnalytics
 import com.pixelnetica.support.ImagePicker
 import com.pixelnetica.support.Tag
 
@@ -89,6 +96,23 @@ fun PageSliderScreen(
 
     val pageProfile = currentPage?.profile?.collectAsStateWithLifecycle(null)
 
+    // Cropping, text recognition and sharing all open a screen that waits for
+    // this page's image, so they are offered only once there is one. Asking
+    // whether the image is here - rather than whether the page is known to be
+    // broken - covers the gap while a freshly swiped-to page is still
+    // resolving, when nothing is known about it yet and the answer to "is it
+    // broken" is a premature no.
+    // Keyed on the page itself. Collecting a flow that changes underneath keeps
+    // the last value it produced until the new one arrives, so without the key
+    // the picture belonging to the page just swiped away from would answer for
+    // the page swiped to - and for that moment a page with no image would look
+    // as though it had one.
+    val hasPageImage = currentPage?.let { page ->
+        key(page.asKey()) {
+            page.pagePicture.collectAsStateWithLifecycle().value.picture != null
+        }
+    } == true
+
     // Profile Menu
     val showProfileMenu = remember {
         mutableStateOf(false)
@@ -110,7 +134,10 @@ fun PageSliderScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.testTag(TestTags.NAV_BACK),
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
@@ -130,6 +157,7 @@ fun PageSliderScreen(
                 actions = {
                     IconButton(
                         onClick = {
+                            AppAnalytics.log(AnalyticsEvent.ScanStarted(AnalyticsSource.CAMERA))
                             cameraLauncher.launch(CameraContract.CameraParams())
                         },
                         enabled = currentPage != null || pages.isEmpty()
@@ -142,6 +170,7 @@ fun PageSliderScreen(
 
                     IconButton(
                         onClick = {
+                            AppAnalytics.log(AnalyticsEvent.ScanStarted(AnalyticsSource.GALLERY))
                             imagePicker.launch(Unit)
                         },
                         enabled = currentPage != null || pages.isEmpty()
@@ -158,7 +187,7 @@ fun PageSliderScreen(
                                 navController.navigate("sharePages/${it.asArg()}")
                             }
                         },
-                        enabled = currentPage != null,
+                        enabled = currentPage != null && hasPageImage,
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_share),
@@ -200,7 +229,8 @@ fun PageSliderScreen(
                     onClick = {
                         currentPage?.rotatePage()
                     },
-                enabled = currentPage != null
+                    enabled = currentPage != null,
+                    modifier = Modifier.testTag(TestTags.SLIDER_ROTATE),
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_rotate_ccw),
@@ -214,10 +244,15 @@ fun PageSliderScreen(
                     onClick = {
                         // Show cutout screen
                         currentPage?.let {
+                            AppAnalytics.log(
+                                AnalyticsEvent.EditorOpened(AnalyticsEditorTrigger.MANUAL)
+                            )
                             navController.navigate("pageCutout/${it.asArg()}")
                         }
                     },
-                    enabled = currentPage != null) {
+                    enabled = currentPage != null && hasPageImage,
+                    modifier = Modifier.testTag(TestTags.SLIDER_CROP),
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_crop_rotate),
                         contentDescription = null,
@@ -230,7 +265,8 @@ fun PageSliderScreen(
                     onClick = {
                         showProfileMenu.value = true
                               },
-                    enabled = pageProfile?.value != null
+                    enabled = pageProfile?.value != null,
+                    modifier = Modifier.testTag(TestTags.SLIDER_PROFILE),
                 ) {
                     when (pageProfile?.value?.profile) {
                         PageViewProfile.Type.Original ->
@@ -277,11 +313,15 @@ fun PageSliderScreen(
 
                 Spacer(modifier = Modifier.weight(1.0F, true))
 
-                IconButton(onClick = {
-                    currentPage?.let {
-                        navController.navigate("pageText/${it.asArg()}")
-                    }
-                }) {
+                IconButton(
+                    onClick = {
+                        currentPage?.let {
+                            navController.navigate("pageText/${it.asArg()}")
+                        }
+                    },
+                    enabled = hasPageImage,
+                    modifier = Modifier.testTag(TestTags.SLIDER_OCR),
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_ocr),
                         contentDescription = null,
@@ -350,6 +390,7 @@ fun ProfileMenu(
                 currentPage?.setShadows(shadows = shadows != true)
                 showMenu = false
             },
+            modifier = Modifier.testTag(TestTags.PROFILE_STRONG_SHADOWS),
             leadingIcon = {
                 when (pageProfile?.value?.shadows) {
                     true -> Icon(
@@ -387,6 +428,7 @@ fun ProfileMenu(
                 currentPage?.setProfile(profile = PageViewProfile.Type.Bitonal)
                 showMenu = false
             },
+            modifier = Modifier.testTag(TestTags.PROFILE_BITONAL),
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_profile_bw),
@@ -412,6 +454,7 @@ fun ProfileMenu(
                 currentPage?.setProfile(profile = PageViewProfile.Type.Monochrome)
                 showMenu = false
             },
+            modifier = Modifier.testTag(TestTags.PROFILE_MONOCHROME),
             leadingIcon = {
                 Icon(
                     painter = painterDrawables(
@@ -441,6 +484,7 @@ fun ProfileMenu(
                 currentPage?.setProfile(PageViewProfile.Type.Colored)
                 showMenu = false
             },
+            modifier = Modifier.testTag(TestTags.PROFILE_COLORED),
             leadingIcon = {
                 Icon(
                     painter = painterDrawables(
@@ -470,6 +514,7 @@ fun ProfileMenu(
                 currentPage?.setProfile(profile = PageViewProfile.Type.Original)
                 showMenu = false
             },
+            modifier = Modifier.testTag(TestTags.PROFILE_ORIGINAL),
             leadingIcon = {
                 Icon(
                     painterResource(id = R.drawable.ic_profile_original),

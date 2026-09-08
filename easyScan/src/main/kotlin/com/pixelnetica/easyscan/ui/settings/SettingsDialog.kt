@@ -1,6 +1,7 @@
 package com.pixelnetica.easyscan.ui.settings
 
 import android.content.pm.PackageManager
+import androidx.core.content.pm.PackageInfoCompat
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -35,6 +37,7 @@ import com.pixelnetica.composable.drawableResource
 import com.pixelnetica.easyscan.BuildConfig
 import com.pixelnetica.easyscan.EasyScanSettings
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.easyscan.appSettingsDataStore
 import com.pixelnetica.easyscan.ui.main.NavDialog
 import com.pixelnetica.composable.htmlToAnnotatedString
@@ -86,7 +89,15 @@ fun SettingsDialog(
                 )
             }
         }
-        val versionName = packageInfo.getOrNull()?.versionName.orEmpty()
+        // "3.2.0 (1234)" - the SemVer this build ships, then the build number,
+        // which is the repository commit count stamped in as versionCode. Both
+        // are wanted in a bug report: the version says which release, the build
+        // number says which build of it.
+        val versionText = packageInfo.getOrNull()?.let { info ->
+            val name = info.versionName.orEmpty()
+            val build = PackageInfoCompat.getLongVersionCode(info)
+            if (name.isEmpty()) "" else "$name ($build)"
+        }.orEmpty()
 
         context.getString(R.string.about_message).htmlToAnnotatedString(
             defaultStyle = SpanStyle(
@@ -97,7 +108,7 @@ fun SettingsDialog(
                 textDecoration = TextDecoration.Underline
             ),
             packageName,
-            versionName,
+            versionText,
         )
     }
 
@@ -111,6 +122,7 @@ fun SettingsDialog(
 
     // Theme
     Spinner(
+        modifier = Modifier.testTag(TestTags.SETTINGS_THEME),
         label = stringResource(id = R.string.settings_change_app_theme),
         options = stringArrayResource(id = R.array.settings_app_themes),
         index = appSettings.appThemeValue,
@@ -131,6 +143,7 @@ fun SettingsDialog(
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
+                modifier = Modifier.testTag(TestTags.SETTINGS_DYNAMIC_COLORS),
                 checked = appSettings.dynamicColors,
                 onCheckedChange = { dynamicColors ->
                     coroutineScope.launch {
@@ -155,6 +168,7 @@ fun SettingsDialog(
     // Auto detect orientation
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
+            modifier = Modifier.testTag(TestTags.SETTINGS_AUTO_ORIENTATION),
             checked = appSettings.autoDetectOrientation,
             onCheckedChange = { autoDetectOrientation ->
                 coroutineScope.launch {
@@ -178,6 +192,7 @@ fun SettingsDialog(
     if (BuildConfig.DEBUG) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
+                modifier = Modifier.testTag(TestTags.SETTINGS_HIDDEN_TEXT),
                 checked = appSettings.showPdfHiddenText,
                 onCheckedChange = { showPdfHiddenText ->
                     coroutineScope.launch {
@@ -200,6 +215,7 @@ fun SettingsDialog(
 
     // PDF images compression
     Spinner(
+        modifier = Modifier.testTag(TestTags.SETTINGS_PDF_COMPRESSION),
         label = stringResource(id = R.string.settings_pdf_image_compression),
         options = stringArrayResource(id = R.array.settings_pdf_image_compression_levels),
         index = appSettings.imageCompressionValue) {index ->
@@ -217,9 +233,12 @@ fun SettingsDialog(
 
     // Languages
     val languages by viewModel.languages.collectAsStateWithLifecycle("")
-    Button(onClick = {
-        navController.navigate("languagesScreen")
-    }) {
+    Button(
+        onClick = {
+            navController.navigate("languagesScreen")
+        },
+        modifier = Modifier.testTag(TestTags.SETTINGS_LANGUAGES),
+    ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_language),
             contentDescription = null,

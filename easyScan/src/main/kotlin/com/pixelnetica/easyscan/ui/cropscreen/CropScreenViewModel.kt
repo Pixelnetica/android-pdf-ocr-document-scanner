@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -81,9 +82,12 @@ class CropScreenViewModel @Inject constructor(
             copy(imageCutout = cutout)
     }
 
+    private val pageInvalid = MutableStateFlow(false)
+
     private val pageContent = MutableStateFlow<PageContent?>(null).apply {
         // Query repository updates
         repository.queryPagePictureState(pageId, false, Page.Status.Input).map { state: PageState ->
+            pageInvalid.value = state.page.status == Page.Status.Invalid
             PageContent(state.picture, state.page.orientation, state.page.cutout, state.input?.inputCutout)
         }.onEach { pageContent: PageContent ->
             emit(pageContent)
@@ -96,6 +100,18 @@ class CropScreenViewModel @Inject constructor(
             it.picture
         }.distinctUntilChanged()
         .stateIn(viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+
+    /**
+     * The page has no image to crop, and none is coming.
+     *
+     * Asked of the page's own state rather than of whether a picture has
+     * arrived: a picture is also absent while one is still being produced, and
+     * telling someone their image is gone when it is merely not ready yet
+     * would be a worse answer than the waiting it replaces. This is the same
+     * state the list and the viewer report, asked here so this screen does not
+     * depend on being reached only through a control disabled in time.
+     */
+    val imageUnavailable = pageInvalid.asStateFlow()
 
     val imageOrientation = pageContent
         .filterNotNull()
@@ -153,6 +169,15 @@ class CropScreenViewModel @Inject constructor(
     }
 
 
+    /**
+     * Persist whatever the user changed on this screen.
+     *
+     * Called from the crop screen as it leaves composition, which is the one
+     * moment that reliably marks the user departing. The write itself is
+     * deliberately detached from this view model's scope: leaving is exactly
+     * when that scope is being cancelled, so a save tied to it would be racing
+     * its own teardown.
+     */
     fun acceptChanges() {
         // Null-safe
         pageContent.value?.let { pageContent: PageContent ->

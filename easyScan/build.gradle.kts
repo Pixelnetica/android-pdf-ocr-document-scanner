@@ -1,5 +1,6 @@
 import com.google.protobuf.gradle.*
 import com.pixelnetica.classloader.embeddedScanningSdk
+import com.pixelnetica.classloader.loadLocalPropertiesOrEmpty
 import com.pixelnetica.classloader.projectBuildTools
 import com.pixelnetica.classloader.projectCompileSdk
 import com.pixelnetica.classloader.projectJavaVersion
@@ -17,6 +18,63 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
     alias(libs.plugins.protobuf)
+
+}
+
+
+// Version scheme: versionName is the plain SemVer of the Pixelnetica SDK
+// release this app ships (the version catalog's `pixelnetica` value; override
+// with -PeasyscanVersionName=X.Y.Z for a demo-only release), versionCode is
+// the repository's commit count, and BuildConfig.GIT_HASH records the source
+// commit. A shallow clone would yield a too-small versionCode, so it fails
+// the build; on a source tree without usable git metadata (for example a ZIP
+// download of this sample) the version stamp falls back to neutral values
+// with a warning instead of failing the configuration.
+val easyscanRepoRoot: File = projectDir.parentFile
+
+fun git(vararg args: String): String = providers.exec {
+    workingDir = easyscanRepoRoot
+    commandLine("git", *args)
+}.standardOutput.asText.get().trim()
+
+val gitAvailable: Boolean = try {
+    providers.exec {
+        workingDir = easyscanRepoRoot
+        commandLine("git", "rev-parse", "--git-dir")
+        isIgnoreExitValue = true
+    }.result.get().exitValue == 0
+} catch (e: Exception) {
+    false // git itself cannot be launched
+}
+
+val gitStamp: Pair<Int, String> = if (gitAvailable) {
+    if (git("rev-parse", "--is-shallow-repository") == "true") {
+        throw GradleException("Shallow git clone detected for easyscan; run 'git fetch --unshallow' in $easyscanRepoRoot")
+    }
+    Pair(git("rev-list", "HEAD", "--count").toInt(), git("rev-parse", "--short", "HEAD"))
+} else {
+    logger.warn("Git metadata unavailable for easyscan; using fallback version stamp")
+    Pair(1, "nogit")
+}
+val easyscanVersionCode: Int = gitStamp.first
+val easyscanGitHash: String = gitStamp.second
+
+val easyscanVersionName: String = (findProperty("easyscanVersionName") as String?)?.also {
+    require(it.matches(Regex("""\d+\.\d+\.\d+"""))) {
+        "easyscanVersionName must be numeric MAJOR.MINOR.PATCH, got '$it'"
+    }
+} ?: libs.versions.pixelnetica.get()
+
+tasks.register("printVersionInfo") {
+    description = "Prints the stamped version values as stable key=value lines"
+    val name = easyscanVersionName
+    val code = easyscanVersionCode
+    val hash = easyscanGitHash
+    doLast {
+        println("versionName=$name")
+        println("versionCode=$code")
+        println("gitHash=$hash")
+    }
 }
 
 android {
@@ -30,8 +88,9 @@ android {
         applicationId = "com.pixelnetica.easyscan"
         minSdk = projectMinSdk
         targetSdk = projectTargetSdk
-        versionCode = 90
-        versionName = "3.0.$versionCode"
+        versionCode = easyscanVersionCode
+        versionName = easyscanVersionName
+        buildConfigField("String", "GIT_HASH", "\"$easyscanGitHash\"")
 
         ndk.debugSymbolLevel = "FULL"
 
@@ -40,6 +99,7 @@ android {
             useSupportLibrary = true
         }
     }
+
 
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
@@ -66,9 +126,6 @@ android {
     packaging {
         // Workaround strange error 'More than one file was found with OS independent path'
         resources.pickFirsts.add("*.so")
-
-        // Try to insert debug symbols (currently it doesn't work)
-        jniLibs.keepDebugSymbols.add("*.so")
 
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -105,14 +162,16 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
 
-            ndk.debugSymbolLevel = "FULL"
+            manifestPlaceholders += mapOf("enableCrashReporting" to "true")
 
             packaging {
                 // disable coroutines debug
                 resources.excludes.add("DebugProbesKt.bin")
             }
+
         }
     }
+
 
     if (embeddedScanningSdk) {
         flavorDimensions.add("stage")
@@ -168,6 +227,7 @@ dependencies {
         implementation(libs.pixelnetica.camera)
     }
 
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons)
@@ -189,6 +249,7 @@ dependencies {
     implementation(libs.google.gson)
     implementation(libs.google.protobuf.javalite)
     implementation(libs.kotlin.reflect)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)
@@ -200,3 +261,4 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
 }
+

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -35,7 +36,12 @@ import com.pixelnetica.composable.isScrolledToEnd
 import com.pixelnetica.composable.rememberDragDropState
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.easyscan.ui.viewitem.*
+import com.pixelnetica.easyscan.analytics.AnalyticsEvent
+import com.pixelnetica.easyscan.analytics.AnalyticsResult
+import com.pixelnetica.easyscan.analytics.AnalyticsSource
+import com.pixelnetica.easyscan.analytics.AppAnalytics
 import com.pixelnetica.support.ImagePicker
 import com.pixelnetica.support.Tag
 import com.pixelnetica.support.scrollbar
@@ -50,11 +56,21 @@ fun PageListScreen(
     val imagePicker = rememberLauncherForActivityResult(
         contract = ImagePicker.create(LocalContext.current)) { uriList ->
         //When the user has selected a photo, its URI is returned here
+        AppAnalytics.log(AnalyticsEvent.ScanCompleted(
+            source = AnalyticsSource.GALLERY,
+            result = if (uriList.isEmpty()) AnalyticsResult.CANCELLED else AnalyticsResult.SUCCESS,
+            pageCount = uriList.size,
+        ))
         viewModel.createNewPages(uriList)
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = CameraContract()) { uriList ->
+        AppAnalytics.log(AnalyticsEvent.ScanCompleted(
+            source = AnalyticsSource.CAMERA,
+            result = if (uriList.isEmpty()) AnalyticsResult.CANCELLED else AnalyticsResult.SUCCESS,
+            pageCount = uriList.size,
+        ))
         viewModel.createNewPages(uriList)
     }
 
@@ -86,7 +102,10 @@ fun PageListScreen(
                 // Action Mode for checked pages
                 TopAppBar(
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.checkAllPages(false) }) {
+                        IconButton(
+                            onClick = { viewModel.checkAllPages(false) },
+                            modifier = Modifier.testTag(TestTags.LIST_CLEAR_SELECTION),
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = null
@@ -164,6 +183,7 @@ fun PageListScreen(
                     actions = {
                         // Load from album
                         IconButton(onClick = {
+                            AppAnalytics.log(AnalyticsEvent.ScanStarted(AnalyticsSource.GALLERY))
                             imagePicker.launch(Unit)
                         }) {
                             Icon(
@@ -193,6 +213,7 @@ fun PageListScreen(
             AnimatedVisibility(visible = !isScrolledToEnd) {
                 FloatingActionButton(
                     onClick = {
+                        AppAnalytics.log(AnalyticsEvent.ScanStarted(AnalyticsSource.CAMERA))
                         cameraLauncher.launch(CameraContract.CameraParams())
                     },
                 ) {

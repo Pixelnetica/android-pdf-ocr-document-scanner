@@ -10,7 +10,7 @@ buildscript {
     }
 }
 
-@Suppress("DSL_SCOPE_VIOLATION") // Remove when will be fixed https://youtrack.jetbrains.com/issue/KTIJ-19369
+@Suppress("DSL_SCOPE_VIOLATION") // Remove when be fixed https://youtrack.jetbrains.com/issue/KTIJ-19369
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.compose.compiler) apply false

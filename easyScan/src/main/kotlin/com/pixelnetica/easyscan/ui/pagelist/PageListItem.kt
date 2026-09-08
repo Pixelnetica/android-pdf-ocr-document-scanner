@@ -36,6 +36,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
@@ -49,6 +50,7 @@ import androidx.navigation.NavController
 import com.pixelnetica.camera.BuildConfig
 import com.pixelnetica.composable.PreviewBox
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.easyscan.ui.viewitem.InitialViewItem
 import com.pixelnetica.easyscan.ui.viewitem.InputViewItem
 import com.pixelnetica.easyscan.ui.viewitem.InvalidViewItem
@@ -106,6 +108,7 @@ fun PageListItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(TestTags.LIST_ITEM)
             .combinedClickable(
                 interactionSource = cardInteractionSource,
                 // Disable ripple for checked mode
@@ -118,6 +121,11 @@ fun PageListItem(
                     // Check in action mode
                     if (hasChecked) {
                         viewModel.checkPage(viewItem, !viewItem.isChecked)
+                    } else if (viewItem is InvalidViewItem) {
+                        // This page has no image left to show. Explain that
+                        // rather than opening it, and offer the action that
+                        // resolves it.
+                        navController.navigate("pageUnavailable/${viewItem.id.asArg()}")
                     } else {
                         // Open current page in PageSlider
                         navController.navigate("pageSlider/${viewItem.id.asArg()}")
@@ -300,7 +308,9 @@ fun PageListItem(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            modifier = Modifier.align(Alignment.TopCenter),
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .testTag(TestTags.LIST_ITEM_CHECKBOX),
                         )
                     }
                 }
@@ -320,7 +330,8 @@ fun PageListItem(
                         .dragContainerForDragHandle(
                             dragDropState = dragDropState,
                             key = viewItem.id
-                        ),
+                        )
+                        .testTag(TestTags.LIST_ITEM_DRAG_HANDLE),
                 )
             }
         }

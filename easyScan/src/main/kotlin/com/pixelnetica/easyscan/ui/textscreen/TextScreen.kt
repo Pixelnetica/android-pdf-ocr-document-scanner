@@ -32,12 +32,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -46,6 +49,7 @@ import com.pixelnetica.design.read.RecognizedStatus
 import com.pixelnetica.design.read.RecognizedText
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.scanning.ScanReader
 import com.pixelnetica.scanning.ScanText
 import com.pixelnetica.support.Tag
@@ -77,7 +81,10 @@ fun TextScreen(
                     Text(stringResource(id = R.string.title_activity_read))
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.testTag(TestTags.NAV_BACK),
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
@@ -241,8 +248,20 @@ fun TextScreen(
                 )
             }
 
-            // Show Progress overlay
-            WaitingOverlay(progressStatus)
+            val imageUnavailable by viewModel.imageUnavailable.collectAsStateWithLifecycle(false)
+            if (imageUnavailable) {
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    text = stringResource(R.string.page_unavailable_message),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                // Show Progress overlay
+                WaitingOverlay(progressStatus)
+            }
         }
 
         // Show or hide keyboard when recognize done

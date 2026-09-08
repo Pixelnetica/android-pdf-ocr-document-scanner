@@ -12,28 +12,33 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.pixelnetica.design.crop.CropPicture
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.R
+import com.pixelnetica.easyscan.ui.TestTags
 import com.pixelnetica.support.WaitingOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropScreen(
     navController: NavController,
-    route: String,
     viewModel: CropScreenViewModel = hiltViewModel()
     ) {
 
@@ -46,14 +51,32 @@ fun CropScreen(
     val canExpand by viewModel.canExpandCutout.collectAsStateWithLifecycle()
     val canRevert by viewModel.canRevertCutout.collectAsStateWithLifecycle()
 
-    // Save a modified cutout on exit
-
-    // There is not good way to handle navigation back
-    // We need to lookup current navigation route.
-    val currentEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = currentEntry?.destination?.route
-    if (currentRoute != null && currentRoute != route) {
-        viewModel.acceptChanges()
+    // Save the edit on the way out.
+    //
+    // This screen has no Save button: whatever the user changes here is kept
+    // when they leave. Leaving composition is the one signal that reliably
+    // marks that moment, so the save is anchored to it.
+    //
+    // The obvious alternative - watching the navigation back stack for the
+    // route changing away from this screen - is not reliable, and the way it
+    // fails is worth knowing if you are writing a screen like this. Reading
+    // the current entry only tells the screen it is leaving on a *later*
+    // recomposition, and once the destination is popped its entry is destroyed
+    // and its ViewModels cleared with no promise that this composable body
+    // runs one more time first. A rotation made just before the back press can
+    // therefore be dropped without a trace. onDispose carries no such
+    // condition: it runs exactly once, whenever this screen actually goes away.
+    //
+    // The save also runs on a configuration change, which disposes and
+    // recomposes the screen. That is harmless here precisely because there is
+    // no cancel affordance - the edit was going to be saved on leave anyway,
+    // so persisting it a moment earlier costs nothing. Note that no effect of
+    // this kind survives the process being killed outright; a draft that must
+    // outlive that has to be written to saved state instead.
+    DisposableEffect(viewModel) {
+        onDispose {
+            viewModel.acceptChanges()
+        }
     }
 
     Scaffold(
@@ -63,9 +86,12 @@ fun CropScreen(
                     Text(text = stringResource(id = R.string.title_activity_crop))
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier.testTag(TestTags.NAV_BACK),
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
@@ -83,6 +109,7 @@ fun CropScreen(
                         viewModel.rotatePage(false)
                     },
                     enabled = isPictureReady,
+                    modifier = Modifier.testTag(TestTags.CROP_ROTATE_CCW),
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_rotate_ccw),
@@ -97,6 +124,7 @@ fun CropScreen(
                         viewModel.rotatePage(true)
                     },
                     enabled = isPictureReady,
+                    modifier = Modifier.testTag(TestTags.CROP_ROTATE_CW),
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_rotate_cw),
@@ -112,6 +140,7 @@ fun CropScreen(
                             viewModel.revertCutout(true)
                         },
                         enabled = isPictureReady,
+                        modifier = Modifier.testTag(TestTags.CROP_EXPAND),
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_expand),
@@ -124,6 +153,7 @@ fun CropScreen(
                             viewModel.revertCutout(false)
                         },
                         enabled = isPictureReady && canRevert,
+                        modifier = Modifier.testTag(TestTags.CROP_REVERT),
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_collapse),
@@ -154,7 +184,17 @@ fun CropScreen(
                 onCutoutChanged = viewModel::changeCutout,
             )
 
-            if (!isPictureReady) {
+            val imageUnavailable by viewModel.imageUnavailable.collectAsStateWithLifecycle()
+            if (imageUnavailable) {
+                Text(
+                    text = stringResource(R.string.page_unavailable_message),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else if (!isPictureReady) {
                 WaitingOverlay(stringResource(R.string.loading))
             }
         }

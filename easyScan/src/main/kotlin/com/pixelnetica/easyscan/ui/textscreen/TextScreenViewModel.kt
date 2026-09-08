@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.pixelnetica.design.lang.LanguageManager
 import com.pixelnetica.easyscan.AppTagger
 import com.pixelnetica.easyscan.data.EasyScanRepository
+import com.pixelnetica.easyscan.data.Page
 import com.pixelnetica.easyscan.ui.viewitem.PageViewId
 import com.pixelnetica.easyscan.ui.viewitem.providePageViewId
 import com.pixelnetica.scanning.ScanPicture
@@ -48,6 +49,20 @@ class TextScreenViewModel @Inject constructor(
     // ReadHandler implementation
     val imagePicture: Flow<ScanPicture?> =
         repository.queryOriginalPicture(pageId)
+
+    /**
+     * The page has no image to read from, and none is coming.
+     *
+     * Asked of the page's own state rather than of whether a picture has
+     * arrived: a picture is also absent while one is still being produced, and
+     * telling someone their image is gone when it is merely not ready yet
+     * would be a worse answer than the waiting it replaces.
+     */
+    val imageUnavailable: Flow<Boolean> =
+        repository
+            .queryPagePictureState(pageId, preview = false, requiredStatus = null)
+            .map { it.page.status == Page.Status.Invalid }
+            .distinctUntilChanged()
 
     val lookupRect: Flow<RectF?> =
         repository

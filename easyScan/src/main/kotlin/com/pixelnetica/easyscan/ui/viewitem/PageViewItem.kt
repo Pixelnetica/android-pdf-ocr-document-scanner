@@ -39,6 +39,8 @@ data class PageViewPicture(
     val picture: ScanPicture?,
     val orientation: ScanOrientation,
     val isComplete: Boolean,
+    /** The page's image file is gone, so no picture is ever going to arrive. */
+    val isUnavailable: Boolean = false,
 ) {
     companion object {
         val Empty = PageViewPicture(null, ScanOrientation.Undefined, false)
